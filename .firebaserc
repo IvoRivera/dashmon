@@ -1,0 +1,14 @@
+{
+  "targets": {
+    "dashboard-monitor-dcd2a": {
+      "hosting": {
+        "dashmon": [
+          "dashboard-monitor-dcd2a"
+        ]
+      }
+    }
+  },
+  "projects": {
+    "default": "dashboard-monitor-dcd2a"
+  }
+}

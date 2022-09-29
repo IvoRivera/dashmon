@@ -94,6 +94,16 @@
             ],
             "scripts": []
           }
+        },
+        "deploy": {
+          "builder": "@angular/fire:deploy",
+          "options": {
+            "prerender": false,
+            "ssr": false,
+            "browserTarget": "dashmon:build:production",
+            "firebaseProject": "dashboard-monitor-dcd2a",
+            "firebaseHostingSite": "dashboard-monitor-dcd2a"
+          }
         }
       }
     }

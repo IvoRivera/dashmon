@@ -4,19 +4,24 @@
       <div class="card text-center">
         <div class="card-body">
           <h3>Agregar item</h3>
-          <form class="mt-4">
+          <span *ngIf="submitted && createItem.invalid" class="badge text-bg-danger">Todos los campos son obligatorios</span>
+          <form class="mt-4" [formGroup]="createItem" (ngSubmit)="agregarItem()">
             <div class="row">
               <div class="col">
-                <input type="text" class="form-control" placeholder="ID">
+                <input type="text" class="form-control"
+                  formControlName="id" placeholder="ID">
+              </div>
+              <div class="col-6">
+                <input type="text" class="form-control"
+                  formControlName="nombre" placeholder="Nombre">
               </div>
               <div class="col">
-                <input type="text" class="form-control" placeholder="Nombre">
-              </div>
-              <div class="col">
-                <input type="text" class="form-control" placeholder="Cantidad">
+                <input type="number" class="form-control"
+                  formControlName="cantidad" placeholder="Cantidad">
               </div>
             </div>
-            <input type="text" class="form-control mt-3" placeholder="Descripción">
+            <input type="text" class="form-control mt-3"
+              formControlName="descripcion" placeholder="Descripción">
             <div class="mt-3">
               <button type="text" class="btn btn-secondary mx-3" routerLink="/inventario">Volver</button>
               <button type="submit" class="btn btn-secondary mx-3">Agregar</button>
