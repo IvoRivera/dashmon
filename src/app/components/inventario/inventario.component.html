@@ -3,44 +3,25 @@
     <div class="card-body">
       <span class="h3">Inventario</span>
       <button class="btn btn-dark btn-lg float-end" routerLink="/create-item">Agregar</button>
-      <table class="table table-striped mt-3">
+      <h4 class="container mt-4" *ngIf="items.length == 0">No hay items para mostrar</h4>
+      <table *ngIf="items.length > 0" class="table table-striped mt-3">
         <thead>
           <tr>
-            <th scope="col">ID</th>
+            <th scope="col">Código</th>
             <th scope="col">Nombre</th>
             <th scope="col">Descripción</th>
             <th scope="col">Cantidad</th>
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <th scope="row">1</th>
-            <td>Item1</td>
-            <td>Decripción 1</td>
-            <td>9999</td>
+          <tr *ngFor="let item of items">
+            <td>{{ item.codigo }}</td>
+            <td>{{ item.nombre }}</td>
+            <td>{{ item.descripcion }}</td>
+            <td>{{ item.cantidad}}</td>
             <td>
-              <i class="material-symbols-outlined text-info mr-2">edit</i>
-              <i class="material-symbols-outlined text-danger">delete</i>
-            </td>
-          </tr>
-          <tr>
-            <th scope="row">2</th>
-            <td>Item2</td>
-            <td>Decripción 2</td>
-            <td>9999</td>
-            <td>
-              <i class="material-symbols-outlined text-info mr-2">edit</i>
-              <i class="material-symbols-outlined text-danger">delete</i>
-            </td>
-          </tr>
-          <tr>
-            <th scope="row">3</th>
-            <td>Item3</td>
-            <td>Decripción 3</td>
-            <td>9999</td>
-            <td>
-              <i class="material-symbols-outlined text-info mr-2">edit</i>
-              <i class="material-symbols-outlined text-danger">delete</i>
+              <i class="material-symbols-outlined text-info mr-2" [routerLink]="['/edit-item', item.id]">edit</i>
+              <i (click)="eliminarItem(item.id)" class="material-symbols-outlined text-danger">delete</i>
             </td>
           </tr>
         </tbody>

@@ -7,6 +7,7 @@ const routes: Routes = [
   { path: '', redirectTo: 'inventario', pathMatch: 'full' },
   { path: 'inventario', component: InventarioComponent },
   { path: 'create-item', component: CreateItemComponent},
+  { path: 'edit-item/:id', component: CreateItemComponent},
   { path: '**', redirectTo: 'inventario', pathMatch: 'full' }
 ];
 

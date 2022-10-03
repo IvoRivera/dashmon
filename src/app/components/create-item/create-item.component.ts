@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { ToastrService } from 'ngx-toastr';
 import { ItemService } from 'src/app/services/item.service';
 
 @Component({
@@ -11,42 +12,96 @@ import { ItemService } from 'src/app/services/item.service';
 export class CreateItemComponent implements OnInit {
   createItem: FormGroup;
   submitted = false;
+  loading = false;
+  id: string | null;
+  titulo = 'Agregar item';
 
   constructor( private fb: FormBuilder,
                private _itemService: ItemService,
-               private router: Router) {
+               private router: Router,
+               private toastr: ToastrService,
+               private aRoute: ActivatedRoute) {
     this.createItem = this.fb.group({
-      id: ['', Validators.required],
+      codigo: ['', Validators.required],
       nombre: ['', Validators.required],
       cantidad: ['', Validators.required],
       descripcion: ['', Validators.required]
    })
+   this.id = this.aRoute.snapshot.paramMap.get('id');
   }
 
   ngOnInit(): void {
+    this.esEditar()
   }
 
-  agregarItem() {
+  agregarEditarItem() {
     this.submitted = true;
 
     if( this.createItem.invalid ){
       return;
     }
+
+    if(this.id === null){
+      this.agregarItem();
+    }else{
+      this.editarItem(this.id);
+    }
+  }
+
+  agregarItem() {
     const item: any = {
-      id: this.createItem.value.id,
+      codigo: this.createItem.value.codigo,
       nombre: this.createItem.value.nombre,
-      cantidad: this.createItem.value.cantidad,
       descripcion: this.createItem.value.descripcion,
+      cantidad: this.createItem.value.cantidad,
       fechaCreacion: new Date(),
       fechaActualizacion: new Date()
     }
-
+    this.loading = true;
     this._itemService.agregarItem(item).then(() => {
-      console.log('Item agregado exitosamente!');
+      this.toastr.success('El item se agregó exitosamente!', 'item agregado', {
+        positionClass: 'toast-bottom-right',
+      });
+      this.loading = false;
       this.router.navigate(['/inventario']);
     }).catch((error: any) =>{
       console.log(error);
+      this.loading = false;
     });
   }
 
+  editarItem(id: string) {
+    const item: any = {
+      codigo: this.createItem.value.codigo,
+      nombre: this.createItem.value.nombre,
+      descripcion: this.createItem.value.descripcion,
+      cantidad: this.createItem.value.cantidad,
+      fechaActualizacion: new Date()
+    }
+    this.loading = true;
+    this._itemService.editarItem(id, item).then(() => {
+      this.loading = false;
+      this.toastr.info('El item ha sido modificado exitosamente!', 'Item modificado', {
+        positionClass: 'toast-bottom-right'
+      })
+      this.router.navigate(['/inventario']);
+    })
+  }
+
+  esEditar() {
+    this.titulo = 'Editar item'
+    if(this.id !== null) {
+      this.loading = true;
+      this._itemService.getItem(this.id).subscribe(data => {
+        this.loading = false;
+        console.log(data.payload.data()['nombre']);
+        this.createItem.setValue({
+          codigo: data.payload.data()['codigo'],
+          nombre: data.payload.data()['nombre'],
+          descripcion: data.payload.data()['descripcion'],
+          cantidad: data.payload.data()['cantidad'],
+        })
+      })
+    }
+  }
 }
