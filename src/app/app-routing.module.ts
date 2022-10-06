@@ -7,18 +7,22 @@ import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { InventarioComponent } from './components/inventario/inventario.component';
 import { CreateItemComponent } from './components/create-item/create-item.component';
 import { AuthGuard } from './services/auth.guard';
+import { RecuperarPasswordComponent } from './components/recuperar-password/recuperar-password.component';
+import { VerificarCorreoComponent } from './components/verificar-correo/verificar-correo.component';
 
 
 const routes: Routes = [
-  { path: '', redirectTo: 'inventario', pathMatch: 'full' },
+  { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: 'inicio', component: InicioComponent },
-  { path: 'login', component: LoginComponent},
   { path: 'registro', component: RegistroComponent},
-  { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard] },
+  { path: 'login', component: LoginComponent},
+  { path: 'verificar-correo', component: VerificarCorreoComponent },
+  { path: 'recuperar-password', component: RecuperarPasswordComponent },
+  { path: 'dashboard', component: DashboardComponent },
   { path: 'inventario', component: InventarioComponent },
   { path: 'create-item', component: CreateItemComponent},
   { path: 'edit-item/:id', component: CreateItemComponent},
-  { path: '**', redirectTo: 'inventario', pathMatch: 'full' }
+  { path: '**', redirectTo: 'login', pathMatch: 'full' }
 ];
 
 @NgModule({
