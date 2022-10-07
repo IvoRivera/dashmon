@@ -28,8 +28,8 @@ export class RegistroComponent implements OnInit {
     private firebaseError: FirebaseErrorCodeService,
   ) {
     this.registro = this.fb.group({
-      email: ['', Validators.required],
-      password: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(6)]],
       repetirPassword: ['', Validators.required],
     });
   }
@@ -50,15 +50,25 @@ export class RegistroComponent implements OnInit {
     this.afAuth
       .createUserWithEmailAndPassword(email, password)
       .then(() => {
-        this.loading = false;
-        this.router.navigate(['/login']);
-        this.toastr.success('El usuario fue registrado exitosamente!', 'Registro exitoso');
+        this.verificarCorreo();
       })
       .catch((error) => {
         this.loading = false;
         this.toastr.error(this.firebaseError.errorCode(error.code), 'Error');
       });
   }
+
+  verificarCorreo() {
+    this.afAuth.currentUser.then(user => user?.sendEmailVerification())
+      .then(() => {
+        this.toastr.info(
+          'Se ha enviado un correo electronico para verificar su cuenta',
+          'Verificar Correo'
+        );
+        this.router.navigate(['/login']);
+      });
+  }
+
 }
 
 // signupForm!: FormGroup;
