@@ -5,6 +5,9 @@ import { BrowserModule } from '@angular/platform-browser';
 import { AppRoutingModule } from './app-routing.module';
 import { AngularFireModule } from '@angular/fire/compat';
 import { AngularFirestoreModule } from '@angular/fire/compat/firestore';
+import {HttpClientModule} from '@angular/common/http';
+
+import {HighchartsChartModule} from 'highcharts-angular';
 
 // Componentes
 import { AppComponent } from './app.component';
@@ -19,14 +22,16 @@ import { ReactiveFormsModule } from '@angular/forms';
     AppComponent,
     InventarioComponent,
     CreateItemComponent,
-    SidenavComponent
+    SidenavComponent    
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
     AngularFireModule.initializeApp(environment.firebase),
     AngularFirestoreModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    HttpClientModule,
+    HighchartsChartModule
   ],
   providers: [],
   bootstrap: [AppComponent]
