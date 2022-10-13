@@ -22,7 +22,7 @@ import { RecuperarPasswordComponent } from './components/recuperar-password/recu
 import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { InventarioComponent } from './components/inventario/inventario.component';
 import { CreateItemComponent } from './components/create-item/create-item.component';
-import { SidenavComponent } from './components/sidenav/sidenav.component';
+import { SidenavComponent } from './shared/sidenav/sidenav.component';
 import { SpinnerComponent } from './shared/spinner/spinner.component';
 
 // Extra

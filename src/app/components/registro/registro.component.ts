@@ -10,36 +10,52 @@ import {
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { ToastrService } from 'ngx-toastr';
 import { FirebaseErrorCodeService } from 'src/app/services/firebase-error-code.service';
+import { UserService } from '../../services/user.service';
 
 @Component({
-  selector: 'app-registro',
+  selector: 'app/registro',
   templateUrl: './registro.component.html',
   styleUrls: ['./registro.component.css'],
 })
 export class RegistroComponent implements OnInit {
-  registro: FormGroup;
+  formRegistro: FormGroup;
   loading: boolean = false;
 
   constructor(
+    private userService: UserService,
     private fb: FormBuilder,
     private afAuth: AngularFireAuth,
     private toastr: ToastrService,
     private router: Router,
     private firebaseError: FirebaseErrorCodeService,
   ) {
-    this.registro = this.fb.group({
+    this.formRegistro= this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
       repetirPassword: ['', Validators.required],
     });
   }
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+
+  }
+
+  onSubmit () {
+    this.userService.registrar(this.formRegistro.value).then(response => {
+        console.log(response)
+      })
+      .catch(error => console.log(error));
+  }
+
+
+
+
+
 
   registrar() {
-    const email = this.registro.value.email;
-    const password = this.registro.value.password;
-    const repetirPassword = this.registro.value.repetirPassword;
+    const email = this.formRegistro.value.email;
+    const password = this.formRegistro.value.password;
+    const repetirPassword = this.formRegistro.value.repetirPassword;
 
     if (password !== repetirPassword) {
       this.toastr.error('Las contraseñas deben coincidir', 'Error');
@@ -88,7 +104,7 @@ export class RegistroComponent implements OnInit {
 //   });
 // }
 
-// registro() {
+// formRegistro() {
 //   if (this.signupForm.invalid)
 //     return;
 

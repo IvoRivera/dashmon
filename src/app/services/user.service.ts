@@ -1,46 +1,40 @@
-import { Component, OnInit } from '@angular/core';
+import { Injectable } from '@angular/core';
+import { createUserWithEmailAndPassword } from '@angular/fire/auth';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { FirebaseErrorCodeService } from 'src/app/services/firebase-error-code.service';
 
-@Component({
-  selector: 'app-login',
-  templateUrl: './login.component.html',
-  styleUrls: ['./login.component.css']
+@Injectable({
+  providedIn: 'root'
 })
-export class LoginComponent implements OnInit {
-  loginUsuario: FormGroup;
+export class UserService {
   loading: boolean = false;
-  dataUser: any;
 
   constructor(
-    private fb: FormBuilder,
     private afAuth: AngularFireAuth,
     private toastr: ToastrService,
-    private router: Router,
-    private firebaseError: FirebaseErrorCodeService
-  ) {
-    this.loginUsuario = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]],
-    })
+    private firebaseError: FirebaseErrorCodeService,
+    private router: Router
+    ) {
   }
 
-  ngOnInit(): void {
-    this.afAuth.currentUser.then((user) => {
-      if(user && user.emailVerified) {
-        this.dataUser = user;
-      } else {
+  registrar({ email, password, repetirPassword }: any) {
+    return createUserWithEmailAndPassword(email, password, repetirPassword );
+  }
+
+  verificarCorreo() {
+    this.afAuth.currentUser.then(user => user?.sendEmailVerification())
+      .then(() => {
+        this.toastr.info(
+          'Se ha enviado un correo electronico para verificar su cuenta',
+          'Verificar Correo'
+        );
         this.router.navigate(['/login']);
-      }
-    })
+      });
   }
 
-  login() {
-    const email = this.loginUsuario.value.email;
-    const password = this.loginUsuario.value.password;
+  login({ email, password }: any) {
 
     this.loading = true;
     this.afAuth.signInWithEmailAndPassword(email, password).then((user) => {
