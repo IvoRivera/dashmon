@@ -11,6 +11,9 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatInputModule } from '@angular/material/input';
+import {HttpClientModule} from '@angular/common/http';
+import { NgApexchartsModule } from "ng-apexcharts";
+
 
 // Componentes
 import { AppComponent } from './app.component';
@@ -30,6 +33,7 @@ import { environment } from 'src/environments/environment';
 import { initializeApp, provideFirebaseApp } from '@angular/fire/app';
 import { provideAuth, getAuth } from '@angular/fire/auth';
 import { provideFirestore, getFirestore } from '@angular/fire/firestore';
+
 
 
 @NgModule({
@@ -56,8 +60,10 @@ import { provideFirestore, getFirestore } from '@angular/fire/firestore';
     AngularFirestoreModule,
     ReactiveFormsModule,
     FormsModule,
+    HttpClientModule,
+    NgApexchartsModule,
     ToastrModule.forRoot(),
-    BrowserAnimationsModule,
+    BrowserAnimationsModule,    
     provideFirebaseApp(() => initializeApp(environment.firebase)),
     provideAuth(() => getAuth()),
     provideFirestore(() => getFirestore()),
