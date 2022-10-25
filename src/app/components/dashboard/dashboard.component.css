@@ -1,0 +1,17 @@
+p {
+  font-family: Lato;
+}
+
+
+.apexcharts-legend text {
+  font-weight: bold;
+}
+
+
+.Grafico{
+  display: inline-flex;
+}
+.Graficos{
+  display: inline-flex;
+}
+

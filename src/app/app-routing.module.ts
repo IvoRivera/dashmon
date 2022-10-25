@@ -3,10 +3,10 @@ import { RouterModule, Routes } from '@angular/router';
 import { InicioComponent } from './components/inicio/inicio.component';
 import { LoginComponent } from './components/login/login.component';
 import { RegistroComponent } from './components/registro/registro.component';
-import { DashboardComponent } from './components/dashboard/dashboard.component';
+import { DashboardComponent } from "./components/dashboard/dashboard.component";
 import { InventarioComponent } from './components/inventario/inventario.component';
 import { CreateItemComponent } from './components/create-item/create-item.component';
-import { AuthGuard } from './services/auth.guard';
+import { AuthGuard } from '../services/firebase/auth.guard';
 import { RecuperarPasswordComponent } from './components/recuperar-password/recuperar-password.component';
 import { VerificarCorreoComponent } from './components/verificar-correo/verificar-correo.component';
 

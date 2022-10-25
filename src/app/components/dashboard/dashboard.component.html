@@ -1,1 +1,85 @@
-<p>dashboard works!</p>
+<div > 
+  <mat-card>
+    <mat-card-title >
+      {{listaServidores[1]?.nombre}}
+    </mat-card-title>
+        <mat-card-subtitle *ngIf="listaServidores[1]?.estado == true">
+          Status: Online <span>🟢</span>
+        </mat-card-subtitle>
+        <mat-card-subtitle *ngIf="listaServidores[1]?.estado == false">
+          Status: Offline <span>🔴</span>
+        </mat-card-subtitle>
+        
+        <mat-card-actions align="end">
+            <!--<button mat-button>Like</button>-->        
+        </mat-card-actions>
+
+
+        <div id="Graficos">
+            <div  class="Grafico">            
+                <apx-chart #graficoRAMM
+                [series]="graficoRAM['series']"
+                [chart]="graficoRAM['chart']"
+                [title]="graficoRAM['title']"
+                [stroke]="graficoRAM['stroke']"
+                [fill]="graficoRAM['fill']"
+                [labels]="graficoRAM['labels']"
+                [plotOptions]="graficoRAM['plotOptions']"                
+              ></apx-chart>            
+            </div>            
+
+            <div  class="Grafico">            
+                <apx-chart #graficoCPUU
+                [series]="graficoCPU['series']"
+                [chart]="graficoCPU['chart']"
+                [title]="graficoCPU['title']"
+                [stroke]="graficoCPU['stroke']"
+                [fill]="graficoCPU['fill']"
+                [labels]="graficoCPU['labels']"
+                [plotOptions]="graficoCPU['plotOptions']"
+              ></apx-chart>            
+            </div>            
+
+            <div  class="Grafico">            
+                <apx-chart #graficoDISKK
+                [series]="graficoDISK['series']"
+                [chart]="graficoDISK['chart']"
+                [title]="graficoDISK['title']"
+                [stroke]="graficoDISK['stroke']"
+                [fill]="graficoDISK['fill']"
+                [labels]="graficoDISK['labels']"
+                [plotOptions]="graficoDISK['plotOptions']"
+              ></apx-chart>            
+            </div>            
+            
+            <div  class="Grafico">            
+              <apx-chart #graficoTEMPP
+                [series]="graficoTEMP['series']"
+                [chart]="graficoTEMP['chart']"
+                [title]="graficoTEMP['title']"
+                [stroke]="graficoTEMP['stroke']"
+                [fill]="graficoTEMP['fill']"
+                [labels]="graficoTEMP['labels']"
+                [plotOptions]="graficoTEMP['plotOptions']"           
+              ></apx-chart>            
+            </div> 
+
+            <div  class="Grafico">            
+              <apx-chart #graficoNETT
+                [series]="graficoNET['series']"
+                [chart]="graficoNET['chart']"
+                [title]="graficoNET['title']"
+                [stroke]="graficoNET['stroke']"
+                [xaxis]="graficoNET['xaxis']"
+                [dataLabels]="graficoNET['dataLabels']"
+                [plotOptions]="graficoNET['plotOptions']"
+                [tooltip]="graficoNET['tooltip']"            
+              ></apx-chart>            
+            </div> 
+
+      </div>
+        
+
+  </mat-card>
+</div>
+

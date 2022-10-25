@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import { ItemService } from 'src/app/services/item.service';
+import { ItemService } from '../../../services/firebase/item.service';
 
 @Component({
   selector: 'app-create-item',

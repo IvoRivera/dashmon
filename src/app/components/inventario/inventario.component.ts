@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { ToastrService } from 'ngx-toastr';
 import { Observable } from 'rxjs';
-import { ItemService } from 'src/app/services/item.service';
+import { ItemService } from '../../../services/firebase/item.service';
 
 @Component({
   selector: 'app-inventario',

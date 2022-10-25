@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { AuthService } from 'src/app/services/auth.service';
+import { AuthService } from '../../../services/firebase/auth.service';
 import {
   FormGroup,
   FormControl,
@@ -9,7 +9,7 @@ import {
 } from '@angular/forms';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { ToastrService } from 'ngx-toastr';
-import { FirebaseErrorCodeService } from 'src/app/services/firebase-error-code.service';
+import { FirebaseErrorCodeService } from '../../../services/firebase/firebase-error-code.service';
 
 @Component({
   selector: 'app-registro',

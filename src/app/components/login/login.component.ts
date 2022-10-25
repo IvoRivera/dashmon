@@ -3,7 +3,7 @@ import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import { FirebaseErrorCodeService } from 'src/app/services/firebase-error-code.service';
+import { FirebaseErrorCodeService } from '../../../services/firebase/firebase-error-code.service';
 
 @Component({
   selector: 'app-login',
