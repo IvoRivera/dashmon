@@ -1,0 +1,38 @@
+.login-page {
+  background-color: rgb(189, 170, 191);
+}
+
+.login-card-body,
+.login-box {
+    background-position: center center;
+    background-size: cover;
+    background-color: rgb(238, 229, 240);
+    color: rgb(98, 98, 98);
+}
+
+img {
+  height: auto;
+  width: 250px;
+  padding-top: 10px;
+}
+
+.login-box,
+a {
+  color: rgb(98, 98, 98);
+}
+
+.social-auth-links,
+a {
+    color: black;
+}
+
+.link-pass {
+  color: rgb(98, 98, 98);
+}
+
+.link-reg {
+  color: rgb(98, 98, 98);
+}
+.cursor{
+cursor: pointer;
+}

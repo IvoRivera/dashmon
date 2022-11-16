@@ -23,14 +23,16 @@
     "@angular/router": "^14.2.0",
     "apexcharts": "^3.36.0",
     "bootstrap": "^5.2.2",
+    "jspdf": "^2.5.1",
     "ng-apexcharts": "^1.7.4",
     "ngx-toastr": "^15.2.0",
     "rxjs": "~7.5.0",
+    "sweetalert2": "^11.6.8",
     "tslib": "^2.3.0",
     "zone.js": "~0.11.4"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "^14.2.4",
+    "@angular-devkit/build-angular": "^14.2.9",
     "@angular/cli": "~14.2.4",
     "@angular/compiler-cli": "^14.2.0",
     "@types/jasmine": "~4.0.0",

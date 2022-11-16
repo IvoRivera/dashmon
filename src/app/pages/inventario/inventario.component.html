@@ -1,0 +1,32 @@
+<div class="container mt-4 mx-4">
+  <div class="card">
+    <div class="card-body">
+      <span class="h3 mr-4">Inventario</span>
+      <button class="btn btn-dark btn-lg float-end" [routerLink]="['/dashboard/create-item']">Agregar</button>
+      <button class="btn btn-dark btn-lg float-end ml-3" (click)="generarPDF()">Exportar como PDF</button>
+      <h4 class="container mt-4" *ngIf="items.length == 0">No hay items para mostrar</h4>
+      <table *ngIf="items.length > 0" class="table mt-3" id="content" #content>
+        <thead>
+          <tr>
+            <th scope="col">Código</th>
+            <th scope="col">Nombre</th>
+            <th scope="col">Descripción</th>
+            <th scope="col">Cantidad</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of items">
+            <td>{{ item.codigo }}</td>
+            <td>{{ item.nombre }}</td>
+            <td>{{ item.descripcion }}</td>
+            <td>{{ item.cantidad}}</td>
+            <td>
+              <i class="fa fa-pen text-info mr-2" [routerLink]="['/dashboard/edit-item', item.id]">editar</i>
+              <i (click)="eliminarItem(item.id)" class="fa fa-trash text-danger">eliminar</i>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

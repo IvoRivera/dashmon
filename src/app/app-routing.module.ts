@@ -1,32 +1,26 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { RouterModule, Routes } from '@angular/router';
-import { InicioComponent } from './components/inicio/inicio.component';
-import { LoginComponent } from './components/login/login.component';
-import { RegistroComponent } from './components/registro/registro.component';
-import { DashboardComponent } from "./components/dashboard/dashboard.component";
-import { InventarioComponent } from './components/inventario/inventario.component';
-import { CreateItemComponent } from './components/create-item/create-item.component';
-import { AuthGuard } from '../services/firebase/auth.guard';
-import { RecuperarPasswordComponent } from './components/recuperar-password/recuperar-password.component';
-import { VerificarCorreoComponent } from './components/verificar-correo/verificar-correo.component';
+import { NopageFoundComponent } from './nopage-found/nopage-found.component';
+import { AuthRoutingModule } from './auth/auth-routing.module';
+import { PagesRoutingModule } from './pages/pages-routing.module';
 
 
-const routes: Routes = [
-  { path: '', redirectTo: 'login', pathMatch: 'full' },
-  { path: 'inicio', component: InicioComponent },
-  { path: 'registro', component: RegistroComponent},
-  { path: 'login', component: LoginComponent},
-  { path: 'verificar-correo', component: VerificarCorreoComponent },
-  { path: 'recuperar-password', component: RecuperarPasswordComponent },
-  { path: 'dashboard', component: DashboardComponent },
-  { path: 'inventario', component: InventarioComponent },
-  { path: 'create-item', component: CreateItemComponent},
-  { path: 'edit-item/:id', component: CreateItemComponent},
-  { path: '**', redirectTo: 'login', pathMatch: 'full' }
-];
+const routes:Routes=[
+
+  {path:'', redirectTo:'/login', pathMatch:'full'},
+  {path:'**', component: NopageFoundComponent}
+
+]
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes)],
-  exports: [RouterModule]
+
+  imports: [
+    CommonModule,
+    RouterModule.forRoot(routes),
+    PagesRoutingModule,
+    AuthRoutingModule
+  ],
+  exports:[RouterModule]
 })
 export class AppRoutingModule { }
