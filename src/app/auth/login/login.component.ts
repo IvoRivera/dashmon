@@ -30,15 +30,16 @@ export class LoginComponent implements OnInit {
 
   ngOnInit(): void {}
 
-  async onGoogleLogin() {
-    try {
-      await this.authSvc.loginGoogle().then(() => {
-        this.router.navigateByUrl('dashboard');
-      });
-    } catch (error: any) {
-      Swal.fire('ERROR', error.message, 'error');
-    }
-  }
+  // LOGIN CON GOOGLE
+  // async onGoogleLogin() {
+  //   try {
+  //     await this.authSvc.loginGoogle().then(() => {
+  //       this.router.navigateByUrl('dashboard');
+  //     });
+  //   } catch (error: any) {
+  //     Swal.fire('ERROR', error.message, 'error');
+  //   }
+  // }
 
   async login() {
     try {
@@ -52,7 +53,7 @@ export class LoginComponent implements OnInit {
           } else {
             Swal.fire({
               icon: 'error',
-              title: 'El email o password son incorrectos...',
+              title: 'El email o contraseña son incorrectos',
               confirmButtonText: 'Aceptar',
               allowOutsideClick: false,
             }).then((result) => {
@@ -75,7 +76,7 @@ export class LoginComponent implements OnInit {
       localStorage.getItem('email') === '' ||
       this.loginForm.value.password === null
     ) {
-      Swal.fire('ERROR', 'Debe llenar el email', 'error');
+      Swal.fire('ERROR', 'Debe ingresar su email', 'error');
       localStorage.removeItem('email');
       localStorage.removeItem('remember');
     } else {
@@ -96,12 +97,12 @@ export class LoginComponent implements OnInit {
 
     if (inputPass.getAttribute('type') === 'password') {
       inputPass.setAttribute('type', 'text');
-      iconEye.classList.remove('fa-eye-slash');
-      iconEye.classList.add('fa-eye');
+      iconEye.classList.remove('fa-solid fa-eye-slash');
+      iconEye.classList.add('fa-solid fa-eye');
     } else {
       inputPass.setAttribute('type', 'password');
-      iconEye.classList.remove('fa-eye');
-      iconEye.classList.add('fa-eye-slash');
+      iconEye.classList.remove('fa-solid fa-eye');
+      iconEye.classList.add('fa-solid fa-eye-slash');
     }
   }
 }
