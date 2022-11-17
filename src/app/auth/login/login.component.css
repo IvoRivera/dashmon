@@ -1,5 +1,5 @@
 .login-page {
-  background-color: rgb(189, 170, 191);
+  background-color: rgb(219, 203, 221);
 }
 
 .login-card-body {
@@ -17,6 +17,11 @@ a {
   color: rgb(98, 98, 98);
 }
 
-.cursor{
+.cursor {
   cursor: pointer;
+}
+
+.btn {
+  background-color: rgb(80, 56, 103);
+  color: white;
 }
