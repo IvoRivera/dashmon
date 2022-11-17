@@ -1,35 +1,13 @@
-import { Component,ViewChild,OnInit } from '@angular/core';
-import { Timestamp } from 'firebase/firestore';
+import { Component } from '@angular/core';
+import { take } from 'rxjs';
+import { DataService } from '../../services/dataAPI/data.service'
+import { ModalDismissReasons, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { CODIGOSREQ } from './enum/CODIGOS';
+import * as ApexCharts from 'apexcharts';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Hosts } from '../../../interfaces/hosts';
 
 
-import {
-  ApexNonAxisChartSeries,
-  ApexPlotOptions,
-  ApexChart,
-  ChartComponent,
-  ApexTitleSubtitle,
-  ApexFill,
-  ApexStroke,
-  
-  
-} from "ng-apexcharts";
-import { Observable, take } from 'rxjs';
-import { DatosHosts } from 'src/interfaces/datos-hosts';
-import {DataService} from '../../../services/dataAPI/data.service'
-import {Servidores} from '../../../interfaces/servidores'
-
-
-
-export type ChartOptions = {
-  series: ApexNonAxisChartSeries;
-  chart: ApexChart;
-  title: ApexTitleSubtitle;
-  stroke: ApexStroke;  
-  fill: ApexFill;
-  labels: string[];
-  plotOptions: ApexPlotOptions;
-  
-};
 
 
 
@@ -38,272 +16,819 @@ export type ChartOptions = {
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
 })
-export class DashboardComponent implements OnInit {  
-  @ViewChild('graficoRAMM', {static: true}) chartRAM: ChartComponent;
-  @ViewChild('graficoCPUU', {static: true}) chartCPU: ChartComponent;
-  @ViewChild('graficoDISKK', {static: true}) chartDISK: ChartComponent;
-  @ViewChild('graficoTEMPP', {static: true}) chartTEMP: ChartComponent;
-  @ViewChild('graficoNETT', {static: true}) chartNET: ChartComponent;
-  
-  public graficoRAM: Partial<any> = {} as Partial<any>   
-  public graficoCPU: Partial<any> = {} as Partial<any>;
-  public graficoDISK: Partial<any> = {} as Partial<any>;
-  public graficoTEMP: Partial<any> = {} as Partial<any>;
-  public graficoNET: Partial<any> = {} as Partial<any>;
-  
-  
-  private data$: Observable<DatosHosts>;
-  private dataStatus$: Observable<DatosHosts>;
+export class DashboardComponent {
 
-  private dataNetObs: Observable<DatosHosts>;
-  private netInVals:any[] = [];
-  private netInFechas:any[] = [];
-
-  private netOutVals:any[] = [];
-  private netOutFechas:any[] = [];
+  /**
+   * A continuacion se declaran y describen las variables globales utilizadas para el template html y componente.
+   */
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  protected chartOptions: Partial<any>[][] = [[], [], [], [], [], [], [], [], [], []]; // Arreglo de opciones vacias para los graficos radiales y de ranuras.
+  protected chartOptionsCompacto: Partial<any>[] = [];                                 // Arreglo de opciones vacios para los graficos radiales compactos.
+  protected active = 1;                                                                // ID de la pestaña activa en los componentes modal.
+  private flagGraficos: boolean = false;                                               // Flag para indicar que los graficos ya han sido creados y evitar que se inicialicen en cada actualizacion.
+  protected hosts: any[] = [];                                                         // Arreglo que contiene los datos de los host, es necesario para que se listen los nombres de los hosts.
+  private modalRef: NgbModalRef;                                                       // Objeto que hace referencia al modal activo, es necesaria para abrir o cerrar el modal
+  private closeResult = '';                                                            // Objeto necesario para el funcionamiento de los modal
+  protected modoCompacto: boolean = false;                                             // Booleano para controlar el modo de vista entre compacto y extendido
+  private arrayInterfacesIN: any[][] = []                                              // Array global que contiene las interfaces y host asociado para los datos de entrada
+  private arrayInterfacesOUT: any[][] = []                                             // Array global que contiene las interfaces y host asociado para los datos de salida
+  protected logs: any[] = [];                                                          // Arreglo que guarda temporalmente las entradas del log solicitado para descargarlo
+  private nuevoHost: Hosts;                                                            // Objeto vacio a rellenar con los datos de un nuevo host al agregarlo por formulario.
+  protected miFormulario: FormGroup;                                                   // Formulario para agregar un nuevo host.
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-  public  listaServidores:Array<Servidores>| any = [];
-  
+  /**
+   * A continuacion se declaran y describen las constantes utilizadas para el funcionamiento del dashboard
+   */
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  private INTERVALOACTUALIZACION = 5000;                                               // Intervalo de actualizacion
+  private LIMITELOGS = 0;                                                          // Limite de resultados de los logs
+  private HOST = "http://192.168.1.15";     // Tes                                     // Direccion del host servidor
+  //private HOST = "http://100.100.100.2";  // Lab                                     // Direccion del host servidor
+  private PUERTO = ":80";                   // Tes                                     // Puerto del servidor
+  //private PUERTO = ":8080";               // Lab                                     // Puerto del servidor
+  private TOKEN = "15c21907aecb9c007bc270252bbadb6f0e181ceb58afeb8e42dae78cf7264b65"; // Test // Token de autorizacion 
+  //private TOKEN = "89a46f0f282ad3c45110c751062f21066eb1765131844c7eb3fdce28e7134285"; // Lab // Token de autorizacion 
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  
-  
 
-  constructor(private servicioDatos: DataService) {
-    this.getStatus();
 
-    this.graficoRAM = this.crearGraficoRadial("graficoRAM","RAM","%");
-    this.graficoCPU = this.crearGraficoRadial("graficoCPU","CPU","%");
-    this.graficoDISK = this.crearGraficoRadial("graficoDISK","Disk","%");
-    this.graficoTEMP = this.crearGraficoRadial("graficoTEMP","Temp","°C");
-    this.graficoNET = this.crearGraficoSpline("IN","OUT");
-  }  
-  ngOnInit() {    
-    setInterval(()=> this.getDatos(),1000);
-    this.initHist();
+
+
+
+  /**
+   * El servicioDatos llama los metodos para establecer la direccion ip del servidor, puerto y token de autenticacion.
+   * En el constructor se declaran e inicializan los servicios para comunicarse con el backend, componentes modales y formularios.
+   * Despues se declara e inicializa el formulario para agregar un nuevo host cuando se necesite.
+   * 
+   * @param servicioDatos - Servicio para comunicarse con el backend.
+   * @param modalService - Servicio para comunicarse con el componente modal.
+   * @param fb - Facilitador para crear formularios.
+   */
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  constructor(private servicioDatos: DataService, private modalService: NgbModal, public fb: FormBuilder) {
+    this.servicioDatos.setHost(this.HOST);
+    this.servicioDatos.setPuerto(this.PUERTO);
+    this.servicioDatos.setToken(this.TOKEN); 
+    this.initGraficos(this.INTERVALOACTUALIZACION);
+    this.miFormulario = this.fb.group({
+      nombre: ['', [Validators.required, Validators.minLength(3), Validators.pattern('^[a-zA-Z0-9_]*$')]],
+      ip: ['', [Validators.required, Validators.minLength(7), Validators.pattern('^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$')]],
+      tag: ['', [Validators.required, Validators.minLength(3)]],
+    });
   }
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   
-  getStatus(): void { 
-    let i = 0;
-    this.dataStatus$ = this.servicioDatos.getHosts();  
-    this.dataStatus$.pipe(take(1)).subscribe((data)=> { 
-      //console.log(data);
-      
-      data.result.forEach(element => {
-        //console.log(element);
-        
-        if (element.status == 0) {
-          this.listaServidores.push({
-            id: i,
-            nombre: element.host,
-            estado: true,
-          })
-        } else {
-          this.listaServidores.push({
-            id: i,
-            nombre: element.host,
-            estado: false,
-          })
-          
-        }
-        i++
+
+  /**
+   * Luego de terminar el ciclo del constructor, se inicializan los graficos y se actualizan los datos cada 10 segundos por defecto.
+   * Este metodo inicializa todos los graficos de los host disponibles y activos 
+   * Se utiliza el servicio declarado en el constructor para obtener todos los host,
+   * para evitar problemas de rendimiento se usa take(1) para desuscribir el observable luego de tomar un solo conjunto de datos.
+   * Se crean los graficos por cada host encontrado.
+   * Despues se inicializan los graficos de red, por cada interfaz de red de cada host.
+   * Se guardan los datos por host para mostrar los nombres en el frontend.
+   * Si el host esta activo, entonces se obtienen sus datos para mostrarlos en los graficos.
+   * Si esta activo el modo compacto solo se cargan los datos de los graficos radiales, si no se cargan los datos de red adicionalmente, 
+   * los datos de red se cargan cada un minuto, para afectar al rendimiento del dashboard.
+   * 
+   * @param intervalo - numero en milisegundos en que se actualizan los datos
+   */
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  initGraficos(intervalo: number) {
+    this.servicioDatos.getHosts().pipe(take(1)).subscribe(arregloHosts => {  //console.log(arregloHosts);
+      if (!this.flagGraficos) this.crearGraficos(arregloHosts.length);
+      this.setNetSeries();
+      arregloHosts.forEach((host: any, i: number) => { //console.log(element);
+        this.hosts[i] = host;
+        this.hosts[i].ip = this.getIpHost(host.hostid,i);
+        if (host.active_available == 1) {
+          if (this.modoCompacto) {
+            setInterval(() => this.getDatosRadialesCompacto(host.hostid, i), intervalo)
+          } else {
+            setInterval(() => {
+              this.getDatosRadiales(host.hostid, i);
+              //this.getLogs(host.hostid);
+            }, intervalo)
+            setInterval(() => {
+              this.getDatosRanura(host.hostid, i);
+
+            }, intervalo + 45000)
+          }
+        };
       });
-      
-    })
-    
-   }
+    });
+  }
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  getDatos(): void { 
-  this.data$ = this.servicioDatos.getDatosHosts();  
-  this.data$.pipe(take(1)).subscribe((data)=> { 
-    console.log(data);
-    
 
-    this.chartRAM.updateOptions({series:[Math.floor(data.result[19].lastvalue)]});    
-    this.chartCPU.updateOptions({series:[Math.floor(data.result[7].lastvalue)]});    
-    this.chartDISK.updateOptions({series:[Math.floor(data.result[17].lastvalue)]});    
-    this.chartTEMP.updateOptions({series:[data.result[0].lastvalue]});    
-  })
- }
 
- initHist():void{
-  this.dataNetObs = this.servicioDatos.getHistHosts();  
-  this.dataNetObs.pipe(take(1)).subscribe(async (data)=>{
-    //console.log(data);
-    
-    data.result.forEach(element => {
-      if (element.itemid == 44251) {
-        this.netInVals.push(element.value);
-        this.netInFechas.push(element.clock * 1000);
-      } else {
-        this.netOutVals.push(element.value);
-        this.netOutFechas.push(element.clock * 1000);
+  getIpHost(hostid:number,indice:number){
+    this.servicioDatos.getInterfacesHosts(hostid).subscribe((res) => {
+      res.result.forEach(element => {
+        if(element.useip == "1"){
+          this.hosts[indice].ip = element.ip
+        }        
+      });
+    });
+
+  }
+
+
+
+  /**
+   * Este metodo verifica si cada host esta activo o no, si lo esta, entonces obtiene los datos de red de sus interfaces.
+   */
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  setNetSeries() {
+    this.servicioDatos.getHosts().pipe(take(1)).subscribe(arregloHosts => {  //console.log(arregloHosts);
+      arregloHosts.forEach((host: any, i: number) => { //console.log(element);
+        if (host.active_available == 1) {
+          this.getSeries(host.hostid, i);
+        };
+      });
+    });
+  }
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+  /**
+     * Se crea una variable local para guardar la id del item que se esta buscando, en este caso, los datos de red
+     * Se utilza el servicio para obtener los datos de red del host obtenido desde el backend,     
+     * los datos obtenidos usando este servicio se filtran segun los string "Bits sent" y "Bits received", esto es porque
+     * hay otros datos en el arreglo obtenido. 
+     * Se puede optimizar configurando los items en las reglas de discovery en el servidor Zabbix quitando los items no utilizados.
+     * 
+     * Para la entrada de datos que corresponde a los datos buscados se extrae el nombre de su host, id del item, direccion del trafico ("OUT" o "IN") y nombre de la interfaz. 
+     * 
+     * @param hostId - Id del host obtenida desde el backend
+     * @param indice - Posicion del host dentro del arreglo que contiene todos los hosts registrados en el backend
+     */
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  getSeries(hostid: number, indice: number): void {
+    let itemid: string = "";
+    this.servicioDatos.getNetItems(hostid).pipe(take(1)).subscribe(res => {
+      for (let i = 0; i < res.result.length; i++) {
+        if (JSON.stringify(res.result[i]).indexOf("Bits received") > 1) {
+          itemid = res.result[i].itemid;
+          let recorte = res.result[i].name.substring(0, res.result[i].name.indexOf(':'));
+          let nombreInterfaz = recorte.substr(recorte.indexOf(" ") + 1);
+          this.addDatosRanura(hostid, itemid, indice, "IN", nombreInterfaz);
+          this.arrayInterfacesIN.push([nombreInterfaz, itemid, hostid])
+          itemid = "";
+        } else if (JSON.stringify(res.result[i]).indexOf("Bits sent") > 1) {
+          itemid = res.result[i].itemid;
+          let recorte = res.result[i].name.substring(0, res.result[i].name.indexOf(':'));
+          let nombreInterfaz = recorte.substr(recorte.indexOf(" ") + 1);
+          this.addDatosRanura(hostid, itemid, indice, "OUT", nombreInterfaz);
+          this.arrayInterfacesOUT.push([nombreInterfaz, itemid, hostid])
+          itemid = "";
+        }
       }
     });
-    var arraydatosIn = [];
-    var arraydatosOut = [];
-    var i = 0;
-    while (i < this.netInFechas.length) {
-      arraydatosIn.push([this.netInFechas[i], this.netInVals[i]]);
-      arraydatosOut.push([this.netOutFechas[i], this.netOutVals[i]]);
-      i++;
-    }
-    
-    await this.chartNET.updateOptions({series: [
-      {
-        name: "IN",
-        data: arraydatosIn
-      },
-      {
-        name: "Out",
-        data: arraydatosOut
-      }
-    ],
+  }
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+  /**
+   * Se utilza el servicio para obtener los datos segun el id interno del host obtenido desde el backend.
+   * Para cada grafico creado se actualizan sus datos, si el dato no se encuentra, se muestra el valor 0.
+   * 
+   * @param hostId - Id del host obtenida desde el backend
+   * @param indice - Posicion del host dentro del arreglo que contiene todos los hosts registrados en el backend
+   */
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  getDatosRadiales(hostId: number, indice: number) {
+    this.servicioDatos.getDatosHosts(hostId).pipe(take(1)).subscribe(datosHost => {
+      //console.log(datosHost);
+
+      ApexCharts.exec("graficoRAM" + indice + 0, "updateSeries",
+        [100 - Math.floor(datosHost.result.find(e => e.key_ === CODIGOSREQ.RAM).lastvalue) ?
+          100 - Math.floor(datosHost.result.find(e => e.key_ === CODIGOSREQ.RAM).lastvalue) : 0]);
+      ApexCharts.exec("graficoCPU" + indice + 1, "updateSeries",
+        [Math.floor(datosHost.result.find(e => e.key_ === CODIGOSREQ.CPU).lastvalue) ?
+          Math.floor(datosHost.result.find(e => e.key_ === CODIGOSREQ.CPU).lastvalue) : 0]);
+      ApexCharts.exec("graficoDISK" + indice + 2, "updateSeries",
+        [Math.floor(datosHost.result.find(e => e.key_ === CODIGOSREQ.DISK).lastvalue) ?
+          Math.floor(datosHost.result.find(e => e.key_ === CODIGOSREQ.DISK).lastvalue) : 0]);
+      ApexCharts.exec("graficoTEMP" + indice + 3, "updateSeries",
+        [datosHost.result.find(e => e.key_ === CODIGOSREQ.TEMP) ?
+          datosHost.result.find(e => e.key_ === CODIGOSREQ.TEMP).lastvalue : 0]);
+
+
+      // En todos los agentes cambiar este parametro UnsafeUserParameters = 1 y allowroot o algo asi en los de linux
+      // en cada agente linux poner este UserParameter=cluster1.cpuTemperature,cat /sys/class/thermal/thermal_zone0/temp, quizas metodoe en el servidor principal
+      // en los agentes windows poner  UserParameter=cluster1.cpuTemperature,powershell -nologo -command "Get-WmiObject MSAcpi_ThermalZoneTemperature -Namespace "root/wmi" | findstr "CurrentTemperature""
     })
-  })
+  }
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+  /**
+   * Se utilza el servicio para obtener los datos segun el id interno del host obtenido desde el backend.
+   * Para cada grafico creado se actualizan sus datos, si el dato no se encuentra, se muestra el valor 0.
+   * 
+   * @param hostId - Id del host obtenida desde el backend
+   * @param indice - Posicion del host dentro del arreglo que contiene todos los hosts registrados en el backend
+   */
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  getDatosRadialesCompacto(hostId: number, indice: number) {
+    this.servicioDatos.getDatosHosts(hostId).pipe(take(1)).subscribe(datosHost => {
+      ApexCharts.exec("graficoCompacto" + indice, "updateOptions", { plotOptions: { radialBar: { hollow: { background: '#00ff1c' } } } });
+      ApexCharts.exec("graficoCompacto" + indice, "updateSeries", [
+        (100 - Math.floor(datosHost.result.find(e => e.key_ === CODIGOSREQ.RAM).lastvalue)) ?
+          (100 - Math.floor(datosHost.result.find(e => e.key_ === CODIGOSREQ.RAM).lastvalue)) : 0,
+        (Math.floor(datosHost.result.find(e => e.key_ === CODIGOSREQ.CPU).lastvalue)) ?
+          Math.floor(datosHost.result.find(e => e.key_ === CODIGOSREQ.CPU).lastvalue) : 0,
+        (Math.floor(datosHost.result.find(e => e.key_ === CODIGOSREQ.DISK).lastvalue)) ?
+          Math.floor(datosHost.result.find(e => e.key_ === CODIGOSREQ.DISK).lastvalue) : 0,
+        (datosHost.result.find(e => e.key_ === CODIGOSREQ.TEMP)) ?
+          datosHost.result.find(e => e.key_ === CODIGOSREQ.TEMP).lastvalue : 0]
+      );
+    })
+  }
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
- }
-  
- crearGraficoRadial(id:string, label:string, simbolo:string): Partial<any>{   
-       let res = {    
-       series: [0],
-       title:{        
-         align: "center"
-       },
-       chart: {
-         id: id,
-         height: 200,
-         width:200,
-         type: "radialBar",
-         toolbar: {
-           show: false
-         }
-       },
-       plotOptions: {
-         radialBar: {
-           startAngle: -135,
-           endAngle: 225,
-           hollow: {
-             margin: 0,
-             size: "70%",
-             background: "#fff",
-             image: undefined,
-             position: "front",
-             dropShadow: {
-               enabled: true,
-               top: 3,
-               left: 0,
-               blur: 4,
-               opacity: 0.24
-             }
-           },
-           track: {
-             background: "#fff",
-             strokeWidth: "67%",
-             margin: 0, // margin is in pixels
-             dropShadow: {
-               enabled: true,
-               top: -3,
-               left: 0,
-               blur: 4,
-               opacity: 0.35
-             }
-           }, 
-           dataLabels: {
-             show: true,             
-             name: {
-               offsetY: -5,
-               show: true,
-               color: "#888",
-               fontSize: "12px"
-             },
-             value: {   
-                formatter: function(val: { toString: () => string; }) {
-                  return parseInt(val.toString(), 10).toString() + simbolo;
-                },           
-               color: "#111",
-               fontSize: "17px",
-               show: true
-             }
-           }
-         }
-       },
-       fill: {
-         type: "gradient",
-         gradient: {
-           shade: "dark",
-           type: "horizontal",
-           shadeIntensity: 0.5,
-           gradientToColors: ["#ABE5A1"],
-           inverseColors: true,
-           opacityFrom: 1,
-           opacityTo: 1,
-           stops: [0, 100]
-         }
-       },
-       stroke: {
-         lineCap: "round"
-       },
-       labels: [label],
-       autoUpdateSeries: true
-       
-     };  
-     return res;
-    
- }
+  /**
+   * Se reinicia el grafico de red del host correspondiente al indice ingresado por parametro.
+   * Se itera por cada interfaz de red del host para poblar nuevamente su grafico de red, esto se hace
+   * tanto para el trafico entrante como saliente ("IN" y "OUT").
+   * 
+   * @param hostId - Id del host obtenida desde el backend
+   * @param indice - Posicion del host dentro del arreglo que contiene todos los hosts registrados en el backend
+   */
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  getDatosRanura(hostid: number, indice: number): void {
+    this.chartOptions[indice][4] = this.defineGraficoRanura("graficoNET" + indice + 4);
+    this.arrayInterfacesIN.forEach(element => {
+      if (element[2] == String(hostid))
+        this.updateDatosRanura(hostid, element[1], indice, "IN", element[0]);
+    });
+    this.arrayInterfacesOUT.forEach(element => {
+      if (element[2] == String(hostid))
+        this.updateDatosRanura(hostid, element[1], indice, "OUT", element[0]);
+    });
+  }
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
- crearGraficoSpline(input1:string, input2:string): Partial<any>{   
-  let res = {
-    series: [
-      {
-        name: input1,
-        data: [[,]]
-      },
-      {
-        name: input2,
-        data:[[,]]
+
+
+  /**
+   * Se crea un arreglo local para los valores y fechas correspondientes a los datos de red.
+   * Se obtienen los datos desde el backend segun los parametros de entrada y se guardan en los arreglos correspondientes,
+   * en el caso de las fechas, estan en UNIX Timestamp y deben ser multiplicadas por 1000 para convertirlas a un formato de fechas legible.
+   * Se emparejan los valores y fechas en otro arreglo para ser agregado a las series de datos del grafico de red, 
+   * .
+   * Se vacian los arreglos temporales por si existe otra interfaz de red con datos y estos no se superpongan a los anteriores.
+   * Si bien se guardan todos los datos, solo se muestran los ultimos 200 por temas de visibilidad y zoom del grafico.
+   * Para ver todos los datos obtenidos (90 dias maximo, segun la configuracion del servidor) hacer click en el simbolo de casa.
+   * 
+   * @param hostid - id del host
+   * @param itemid - id del item 
+   * @param indice - Indice del host en el arreglo principal
+   * @param modo  - Direccion del trafico de red, si es entrante ("IN") o saliente ("OUT")
+   * @param nombreInterfaz - Nombre de la interfaz, por ejemplo: ens33, wlan0, eth0...
+   */
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  addDatosRanura(hostid: number, itemid: string, indice: number, modo: string, nombreInterfaz: string) {
+    let netVals: any[] = [];
+    let netFechas: any[] = [];
+    this.servicioDatos.getNetHistHosts(hostid, itemid).pipe(take(1)).subscribe((data) => { //console.log(data);
+      data.result.forEach((element: any, i: number) => {
+        netVals.push(element.value);
+        netFechas.push(element.clock * 1000);
+      });
+      var arraydatos = [];
+      var j = 0;
+      while (j < netFechas.length) {
+        arraydatos.push([netFechas[j], netVals[j]]);
+        j++;
       }
-    ],
-    chart: {
-      height: 350,
-      type: "area",
-      width: "250%",
-      zoom:{
-        enabled: true,
-        type: 'x',
-        autoScaleYaxis: true
+      ApexCharts.exec("graficoNET" + indice + 4, "appendSeries", {
+        name: modo + " [" + nombreInterfaz + "]",
+        data: arraydatos.slice(-400)
+      });
+      netFechas = [];
+      netVals = [];
+    })
+  }
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  /**
+     * Se crea un arreglo local para los valores y fechas correspondientes a los datos de red.
+     * Se obtienen los datos desde el backend segun los parametros de entrada y se guardan en los arreglos correspondientes,
+     * en el caso de las fechas, estan en UNIX Timestamp y deben ser multiplicadas por 1000 para convertirlas a un formato de fechas legible.
+     * Se emparejan los valores y fechas en otro arreglo para ser agregado a las series de datos del grafico de red, 
+     * .
+     * Se vacian los arreglos temporales por si existe otra interfaz de red con datos y estos no se superpongan a los anteriores.
+     * Si bien se guardan todos los datos, solo se muestran los ultimos 200 por temas de visibilidad y zoom del grafico.
+     * Para ver todos los datos obtenidos (90 dias maximo, segun la configuracion del servidor) hacer click en el simbolo de casa.* 
+     * 
+     * @param hostid - id del host
+     * @param itemid - id del item 
+     * @param indice - Indice del host en el arreglo principal
+     * @param modo  - Direccion del trafico de red, si es entrante ("IN") o saliente ("OUT")
+     * @param nombreInterfaz - Nombre de la interfaz, por ejemplo: ens33, wlan0, eth0...
+     */
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  updateDatosRanura(hostid: number, itemid: string, indice: number, modo: string, nombreInterfaz: string) {
+    let netVals: any[] = [];
+    let netFechas: any[] = [];
+    this.servicioDatos.getNetHistHosts(hostid, itemid).pipe(take(1)).subscribe((data) => { //console.log(data);
+      data.result.forEach((element: any, i: number) => {
+        netVals.push(element.value);
+        netFechas.push(element.clock * 1000);
+      });
+      var arraydatos = [];
+      var j = 0;
+      while (j < netFechas.length) {
+        arraydatos.push([netFechas[j], netVals[j]]);
+        j++;
       }
 
-    },
-    dataLabels: {
-      enabled: false
-    },
-    stroke: {
-      curve: "smooth"
-    },
-    xaxis: {
-      type: "datetime",
-      max:  Date.now(),
-      labels: {
-        datetimeUTC: false
-      }
-    },
-    yaxis:{
-      max: 1000,
-      min:10
-    },
-    tooltip: {
-      x: {
-        format: "dd/MM/yy HH:mm"
-      }
-    },
-    title:{
-      text: "Trafico de red (Bits/s)"
+      ApexCharts.exec("graficoNET" + indice + 4, "appendSeries", {
+        name: modo + " [" + nombreInterfaz + "]",
+        data: arraydatos.slice(-400)
+      });
+      netFechas = [];
+      netVals = [];
+    })
+  }
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+  /**
+    * Este metodo define y asigna las opciones iniciales para cada grafico segun su tipo y cantidad de host detectados.
+    * Luego de haber creado todos los graficos se cambia el flag para evitar que se haga esto en cada actualizacion.
+    * @param cantidadHosts - es la cantidad de host detectados por la metodo que llama esta.
+    */
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  crearGraficos(cantidadHosts: number) {
+    for (let i = 0; i < cantidadHosts; i++) {
+      this.chartOptions[i][0] = this.defineGraficoRadial("graficoRAM" + i + 0, "RAM", "%");
+      this.chartOptions[i][1] = this.defineGraficoRadial("graficoCPU" + i + 1, "CPU", "%");
+      this.chartOptions[i][2] = this.defineGraficoRadial("graficoDISK" + i + 2, "Disk", "%");
+      this.chartOptions[i][3] = this.defineGraficoRadial("graficoTEMP" + i + 3, "Temp", "°C");
+      this.chartOptions[i][4] = this.defineGraficoRanura("graficoNET" + i + 4);
+
+      this.chartOptionsCompacto[i] = this.defineGraficoRadialCompacto("graficoCompacto" + i)
     }
-    
-  };
-return res;
-}
+    this.flagGraficos = true;
+  }
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+  /**
+   * Este metodo crea un arreglo de opciones que seran devueltos a la metodo que llama esta para ser asignados a un grafico tipo radial
+   * La estructura corresponde a un arreglo valido de opciones para un grafico de ApexCharts.
+   * 
+   * @param id - String para identificar el grafico de manera interna.
+   * @param etiqueta - String que se muestra en el grafico ya dibujado.
+   * @param simbolo - Caracter que se muestra junto al valor del grafico, se utiliza "%"  y "°C".
+   * 
+   * @returns Arreglo parcial en formato json con las opciones construidas para un tipo de grafico.
+   */
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  defineGraficoRadial(id: string, etiqueta: string, simbolo: string): Partial<any> {
+    let grafico = {
+      series: [0],
+      title: {
+        align: "center"
+      },
+      chart: {
+        id: id,
+        offsetX: -35,
+        animations: {
+          enabled: true,
+          easing: 'easeinout',
+          speed: 800,
+          animateGradually: {
+            enabled: true,
+            delay: 150
+          },
+          dynamicAnimation: {
+            enabled: true,
+            speed: 350
+          }
+        },
+        height: 200,
+        width: 200,
+        type: "radialBar",
+        toolbar: {
+          show: false
+        }
+      },
+      plotOptions: {
+        radialBar: {
+          startAngle: -135,
+          endAngle: 225,
+          hollow: {
+            margin: 0,
+            size: "70%",
+            background: "#ccc",
+            image: undefined,
+            position: "front",
+            dropShadow: {
+              enabled: true,
+              top: 3,
+              left: 0,
+              blur: 4,
+              opacity: 0.24
+            }
+          },
+          track: {
+            background: "#a3a3a3",
+            strokeWidth: "67%",
+            margin: 0,
+            dropShadow: {
+              enabled: true,
+              top: -3,
+              left: 0,
+              blur: 4,
+              opacity: 0.35
+            }
+          },
+          dataLabels: {
+            show: true,
+            name: {
+              offsetY: -5,
+              show: true,
+              color: "#888",
+              fontSize: "12px"
+            },
+            value: {
+              formatter: function (val: { toString: () => string; }) {
+                return parseInt(val.toString(), 10).toString() + simbolo;
+              },
+              color: "#111",
+              fontSize: "17px",
+              show: true
+            }
+          }
+        }
+      },
+      fill: {
+        type: "gradient",
+        gradient: {
+          shade: "dark",
+          type: "horizontal",
+          shadeIntensity: 0.5,
+          gradientToColors: ["#ABE5A1"],
+          inverseColors: true,
+          opacityFrom: 1,
+          opacityTo: 1,
+          stops: [0, 100]
+        }
+      },
+      stroke: {
+        lineCap: "round"
+      },
+      labels: [etiqueta],
+      autoUpdateSeries: true
+
+    };
+    return grafico;
+  }
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+  /**
+   * Este metodo crea un arreglo de opciones que seran devueltos a la metodo que llama esta para ser asignados a un grafico tipo ranura
+   * La estructura corresponde a un arreglo valido de opciones para un grafico de ApexCharts.
+   * 
+   * @param id - String para identificar el grafico de manera interna.
+   *  
+   * @returns Arreglo parcial en formato json con las opciones construidas para un tipo de grafico.
+   */
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  defineGraficoRanura(id: string): Partial<any> {
+    let res = {
+      series: [],
+      chart: {
+        height: 350,
+        type: "area",
+        id: id,
+
+        zoom: {
+          enabled: true,
+          type: 'x',
+          autoScaleYaxis: true
+        }
+
+      },
+      dataLabels: {
+        enabled: false
+      },
+      stroke: {
+        curve: "smooth"
+      },
+      xaxis: {
+        type: "datetime",
+        min: Date.now() - 86400000,
+        max: Date.now(),
+        labels: {
+          datetimeUTC: false
+        }
+      },
+
+      tooltip: {
+        x: {
+          format: "dd/MM/yy HH:mm"
+        }
+      },
+      title: {
+        text: "Trafico de red (Bits/s)"
+      }
+
+    };
+    return res;
+  }
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+  /**
+     * Esta metodo crea un arreglo de opciones que seran devueltos a la metodo que llama esta para ser asignados a un grafico tipo radial compacto
+     * La estructura corresponde a un arreglo valido de opciones para un grafico de ApexCharts.
+     * A diferencia del grafico radial no compacto es que este tiene preestablecidas las etiquetas para cada campo monitoreado,
+     * y solo se actualizan los datos asociados a estas etiquetas.
+     * Para la unidad de medida por defecto se imprime el simbolo "%", para el campo con indice 3 (temperatura) se imprime "°C"
+     * 
+     * @param id - String para identificar el grafico de manera interna.
+     * @param titulo - Es el nombre del host para poder identificar a cual grafico corresponde
+     * @returns Arreglo parcial en formato json con las opciones construidas para un tipo de grafico.
+     */
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  defineGraficoRadialCompacto(id: string): Partial<any> {
+    let grafico = {
+      series: [0, 0, 0, 0],
+      chart: {
+        id: id,
+        height: 390,
+        redrawOnParentResize: false,
+        type: "radialBar"
+      },
+      plotOptions: {
+        radialBar: {
+          offsetY: 0,
+          startAngle: 0,
+          endAngle: 270,
+          hollow: {
+            margin: 40,
+            size: "30%",
+            background: "#ff0000",
+            image: undefined
+          },
+          dataLabels: {
+            name: {
+              show: false
+            },
+            value: {
+              show: false
+            }
+          }
+        }
+      },
+      colors: ["#1ab7ea", "#0084ff", "#39539E", "#0077B5"],
+      labels: ['RAM', 'CPU', 'Disco', 'Temp'],
+      title: {
+        text: "",
+        offsetY: 25,
+        offsetX: 60,
+        style: {
+          fontSize: "20px"
+        }
+      },
+      legend: {
+        show: true,
+        floating: true,
+        fontSize: "16px",
+        position: "left",
+        horizontalAlign: 'center',
+        offsetX: -30,
+        offsetY: 20,
+        labels: {
+          useSeriesColors: true
+        }, formatter: function (seriesName: string, opts: { w: { globals: { series: { [x: string]: string; }; }; }; seriesIndex: string | number; }) {
+          if (opts.seriesIndex == 3) return seriesName + ":  " + opts.w.globals.series[opts.seriesIndex] + "°C";
+          return seriesName + ":  " + opts.w.globals.series[opts.seriesIndex] + "%";
+        },
+        itemMargin: {
+          horizontal: 3
+        }
+      },
+      responsive: [
+        {
+          breakpoint: 480,
+          options: {
+            legend: {
+              show: false
+            }
+          }
+        }
+      ]
+    };
+    return grafico;
+  }
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+  /**
+   * Este metodo obtiene todos los items con el tag "log", luego filtra por los que no entregan erroes, es decir, los que son 
+   * compatibles con el host que esta solicitando el log.
+   * Por cada log encontrado guardamos su nombre e id de item, con este ultimo se obtiene el log completo.
+   * Cada entrada del array de respuesta se guarda como una linea que se va acumulando en un archivo que finalmente se descarga en texto plano .txt* 
+   * 
+   * @param hostid - id del host que pide el log
+   * 
+   */
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  public obtenerLogs(hostid: number) {
+    this.servicioDatos.getItemLogs(hostid, "log").pipe(take(1)).subscribe((res) => {
+      res.forEach((element: any) => {
+        if (element.error == "") {
+          let nombreLog = element.name;
+          this.servicioDatos.getLogs(hostid, element.itemid, this.LIMITELOGS).pipe(take(1)).subscribe((res) => {
+            res.result.forEach((element: any, i: number) => {
+              this.logs.push(element.value)
+            });
+            if (this.logs.length != 0) {
+              let logs = this.logs.join('\r\n');
+              var textToSave = logs;
+              var hiddenElement = document.createElement('a');
+              hiddenElement.href = 'data:attachment/text,' + encodeURI(textToSave);
+              hiddenElement.target = '_blank';
+              hiddenElement.download = nombreLog + '.txt';
+              hiddenElement.click();
+              this.logs = [];
+            }
+          })
+        }
+      }
+      );
+    }
+    );
+  }
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+  /**
+   * Funcion generica para abrir un modal arbitrario
+   * 
+   * Al abrir el modal para agrega un nuevo host se establece un tiempo de actualizacion de una hora, para impedir que los datos ingresados
+   * se pierdan.
+   * Si se ingresa el host correctamente o se cierra la ventana, se reinicia el intervalo a 15s.
+   * 
+   * @param content - contenido que sera mostrado en el modal, este valor lo emite el template html
+   */
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  public abrirModal(content: any) {
+    this.modalRef = this.modalService.open(content, { ariaLabelledBy: 'modal-basic-title' });
+    this.modalRef.result.then(
+      (result) => {
+        this.closeResult = `Closed with: ${result}`;
+      }, (reason) => {
+        this.closeResult = `Dismissed ${this.getDismissReason(reason)}`;
+      }
+    );
+  }
+  private getDismissReason(reason: any): string {
+    if (reason === ModalDismissReasons.ESC) {
+      return 'by pressing ESC';
+    } else if (reason === ModalDismissReasons.BACKDROP_CLICK) {
+      return 'by clicking on a backdrop';
+    } else {
+      return `with: ${reason}`;
+    }
+  }
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+  /**
+   * Este metodo crea un nuevo host en base a los datos ingresados en el formulario,
+   * si los datos son validos se crea un nuevo host y se actualizan los graficos
+   * 
+   */
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  guardar() {
+    if (this.miFormulario.invalid) {
+      this.miFormulario.markAllAsTouched();
+      return;
+    }
+    this.nuevoHost = {
+      nombre: this.miFormulario.get("nombre")?.value,
+      ip: this.miFormulario.get("ip")?.value,
+      tag: this.miFormulario.get("tag")?.value,
+
+    }
+    console.log(this.nuevoHost);
+    this.servicioDatos.crearHost(this.miFormulario.get("nombre")?.value, this.miFormulario.get("ip")?.value, this.miFormulario.get("tag")?.value).subscribe(datos => {
+      this.modalRef.close()
+      this.miFormulario.reset();
+    });
+    this.flagGraficos = false;
+    this.initGraficos(this.INTERVALOACTUALIZACION);
+  }
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+  /**
+   * Simplemente resetea los campos del formulario de crear nuevo host
+   */
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  resetearCampos() {
+    this.miFormulario.reset();
+  }
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+  /**
+   * Metodo nativo del navegador para comprobar si realmente queremos eliminar el host, esto lo hace mediente el servicio,
+   * al cual le pasa la id del host que hemos seleccionado segun su elemento card en el html   * 
+   * 
+   * @param hostid - id del host
+   * @param nombre - nombre del host
+   */
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  clickMethod(hostid: number, nombre: string) {
+    if (confirm("Seguro que quieres eliminar el host " + nombre)) {
+      if (confirm("Esta accion es irreversible ¿Realmente quieres eliminarlo?")) {
+        this.servicioDatos.eliminarHost(String(hostid)).subscribe((res) => console.log(res));
+        this.flagGraficos = false;
+        this.initGraficos(this.INTERVALOACTUALIZACION);
+      }
+    }
+  }
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+  /**
+   *  Activa el modo oscuro segun las variables del archivo styles.css
+   */
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////  
+  onValChange() {
+    document.body.classList.toggle('dark-theme');
+  }
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////  
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////  
+
+
+
+  /**
+   * Es un switch simple que intercambia los estados de este booleano
+   * para controlar el modo de visualizacion.
+   */
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  cambiarTipoVista() {
+    if (this.modoCompacto == true) {
+      this.modoCompacto = false;
+      this.initGraficos(this.INTERVALOACTUALIZACION);
+    }
+    else {
+      this.modoCompacto = true;
+      this.initGraficos(this.INTERVALOACTUALIZACION);
+    }
+  }
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 }
