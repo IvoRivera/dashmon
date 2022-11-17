@@ -9,8 +9,6 @@ import { Hosts } from '../../../interfaces/hosts';
 
 
 
-
-
 @Component({
   selector: 'app-dashboard',
   templateUrl: './dashboard.component.html',
@@ -49,8 +47,8 @@ export class DashboardComponent {
   //private HOST = "http://100.100.100.2";  // Lab                                     // Direccion del host servidor
   private PUERTO = ":80";                   // Tes                                     // Puerto del servidor
   //private PUERTO = ":8080";               // Lab                                     // Puerto del servidor
-  private TOKEN = "15c21907aecb9c007bc270252bbadb6f0e181ceb58afeb8e42dae78cf7264b65"; // Test // Token de autorizacion 
-  //private TOKEN = "89a46f0f282ad3c45110c751062f21066eb1765131844c7eb3fdce28e7134285"; // Lab // Token de autorizacion 
+  private TOKEN = "15c21907aecb9c007bc270252bbadb6f0e181ceb58afeb8e42dae78cf7264b65"; // Test // Token de autorizacion
+  //private TOKEN = "89a46f0f282ad3c45110c751062f21066eb1765131844c7eb3fdce28e7134285"; // Lab // Token de autorizacion
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -63,7 +61,7 @@ export class DashboardComponent {
    * El servicioDatos llama los metodos para establecer la direccion ip del servidor, puerto y token de autenticacion.
    * En el constructor se declaran e inicializan los servicios para comunicarse con el backend, componentes modales y formularios.
    * Despues se declara e inicializa el formulario para agregar un nuevo host cuando se necesite.
-   * 
+   *
    * @param servicioDatos - Servicio para comunicarse con el backend.
    * @param modalService - Servicio para comunicarse con el componente modal.
    * @param fb - Facilitador para crear formularios.
@@ -72,7 +70,7 @@ export class DashboardComponent {
   constructor(private servicioDatos: DataService, private modalService: NgbModal, public fb: FormBuilder) {
     this.servicioDatos.setHost(this.HOST);
     this.servicioDatos.setPuerto(this.PUERTO);
-    this.servicioDatos.setToken(this.TOKEN); 
+    this.servicioDatos.setToken(this.TOKEN);
     this.initGraficos(this.INTERVALOACTUALIZACION);
     this.miFormulario = this.fb.group({
       nombre: ['', [Validators.required, Validators.minLength(3), Validators.pattern('^[a-zA-Z0-9_]*$')]],
@@ -82,20 +80,20 @@ export class DashboardComponent {
   }
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  
+
 
   /**
    * Luego de terminar el ciclo del constructor, se inicializan los graficos y se actualizan los datos cada 10 segundos por defecto.
-   * Este metodo inicializa todos los graficos de los host disponibles y activos 
+   * Este metodo inicializa todos los graficos de los host disponibles y activos
    * Se utiliza el servicio declarado en el constructor para obtener todos los host,
    * para evitar problemas de rendimiento se usa take(1) para desuscribir el observable luego de tomar un solo conjunto de datos.
    * Se crean los graficos por cada host encontrado.
    * Despues se inicializan los graficos de red, por cada interfaz de red de cada host.
    * Se guardan los datos por host para mostrar los nombres en el frontend.
    * Si el host esta activo, entonces se obtienen sus datos para mostrarlos en los graficos.
-   * Si esta activo el modo compacto solo se cargan los datos de los graficos radiales, si no se cargan los datos de red adicionalmente, 
+   * Si esta activo el modo compacto solo se cargan los datos de los graficos radiales, si no se cargan los datos de red adicionalmente,
    * los datos de red se cargan cada un minuto, para afectar al rendimiento del dashboard.
-   * 
+   *
    * @param intervalo - numero en milisegundos en que se actualizan los datos
    */
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -133,7 +131,7 @@ export class DashboardComponent {
       res.result.forEach(element => {
         if(element.useip == "1"){
           this.hosts[indice].ip = element.ip
-        }        
+        }
       });
     });
 
@@ -161,13 +159,13 @@ export class DashboardComponent {
 
   /**
      * Se crea una variable local para guardar la id del item que se esta buscando, en este caso, los datos de red
-     * Se utilza el servicio para obtener los datos de red del host obtenido desde el backend,     
+     * Se utilza el servicio para obtener los datos de red del host obtenido desde el backend,
      * los datos obtenidos usando este servicio se filtran segun los string "Bits sent" y "Bits received", esto es porque
-     * hay otros datos en el arreglo obtenido. 
+     * hay otros datos en el arreglo obtenido.
      * Se puede optimizar configurando los items en las reglas de discovery en el servidor Zabbix quitando los items no utilizados.
-     * 
-     * Para la entrada de datos que corresponde a los datos buscados se extrae el nombre de su host, id del item, direccion del trafico ("OUT" o "IN") y nombre de la interfaz. 
-     * 
+     *
+     * Para la entrada de datos que corresponde a los datos buscados se extrae el nombre de su host, id del item, direccion del trafico ("OUT" o "IN") y nombre de la interfaz.
+     *
      * @param hostId - Id del host obtenida desde el backend
      * @param indice - Posicion del host dentro del arreglo que contiene todos los hosts registrados en el backend
      */
@@ -202,7 +200,7 @@ export class DashboardComponent {
   /**
    * Se utilza el servicio para obtener los datos segun el id interno del host obtenido desde el backend.
    * Para cada grafico creado se actualizan sus datos, si el dato no se encuentra, se muestra el valor 0.
-   * 
+   *
    * @param hostId - Id del host obtenida desde el backend
    * @param indice - Posicion del host dentro del arreglo que contiene todos los hosts registrados en el backend
    */
@@ -237,7 +235,7 @@ export class DashboardComponent {
   /**
    * Se utilza el servicio para obtener los datos segun el id interno del host obtenido desde el backend.
    * Para cada grafico creado se actualizan sus datos, si el dato no se encuentra, se muestra el valor 0.
-   * 
+   *
    * @param hostId - Id del host obtenida desde el backend
    * @param indice - Posicion del host dentro del arreglo que contiene todos los hosts registrados en el backend
    */
@@ -266,7 +264,7 @@ export class DashboardComponent {
    * Se reinicia el grafico de red del host correspondiente al indice ingresado por parametro.
    * Se itera por cada interfaz de red del host para poblar nuevamente su grafico de red, esto se hace
    * tanto para el trafico entrante como saliente ("IN" y "OUT").
-   * 
+   *
    * @param hostId - Id del host obtenida desde el backend
    * @param indice - Posicion del host dentro del arreglo que contiene todos los hosts registrados en el backend
    */
@@ -291,14 +289,14 @@ export class DashboardComponent {
    * Se crea un arreglo local para los valores y fechas correspondientes a los datos de red.
    * Se obtienen los datos desde el backend segun los parametros de entrada y se guardan en los arreglos correspondientes,
    * en el caso de las fechas, estan en UNIX Timestamp y deben ser multiplicadas por 1000 para convertirlas a un formato de fechas legible.
-   * Se emparejan los valores y fechas en otro arreglo para ser agregado a las series de datos del grafico de red, 
+   * Se emparejan los valores y fechas en otro arreglo para ser agregado a las series de datos del grafico de red,
    * .
    * Se vacian los arreglos temporales por si existe otra interfaz de red con datos y estos no se superpongan a los anteriores.
    * Si bien se guardan todos los datos, solo se muestran los ultimos 200 por temas de visibilidad y zoom del grafico.
    * Para ver todos los datos obtenidos (90 dias maximo, segun la configuracion del servidor) hacer click en el simbolo de casa.
-   * 
+   *
    * @param hostid - id del host
-   * @param itemid - id del item 
+   * @param itemid - id del item
    * @param indice - Indice del host en el arreglo principal
    * @param modo  - Direccion del trafico de red, si es entrante ("IN") o saliente ("OUT")
    * @param nombreInterfaz - Nombre de la interfaz, por ejemplo: ens33, wlan0, eth0...
@@ -333,14 +331,14 @@ export class DashboardComponent {
      * Se crea un arreglo local para los valores y fechas correspondientes a los datos de red.
      * Se obtienen los datos desde el backend segun los parametros de entrada y se guardan en los arreglos correspondientes,
      * en el caso de las fechas, estan en UNIX Timestamp y deben ser multiplicadas por 1000 para convertirlas a un formato de fechas legible.
-     * Se emparejan los valores y fechas en otro arreglo para ser agregado a las series de datos del grafico de red, 
+     * Se emparejan los valores y fechas en otro arreglo para ser agregado a las series de datos del grafico de red,
      * .
      * Se vacian los arreglos temporales por si existe otra interfaz de red con datos y estos no se superpongan a los anteriores.
      * Si bien se guardan todos los datos, solo se muestran los ultimos 200 por temas de visibilidad y zoom del grafico.
-     * Para ver todos los datos obtenidos (90 dias maximo, segun la configuracion del servidor) hacer click en el simbolo de casa.* 
-     * 
+     * Para ver todos los datos obtenidos (90 dias maximo, segun la configuracion del servidor) hacer click en el simbolo de casa.*
+     *
      * @param hostid - id del host
-     * @param itemid - id del item 
+     * @param itemid - id del item
      * @param indice - Indice del host en el arreglo principal
      * @param modo  - Direccion del trafico de red, si es entrante ("IN") o saliente ("OUT")
      * @param nombreInterfaz - Nombre de la interfaz, por ejemplo: ens33, wlan0, eth0...
@@ -400,11 +398,11 @@ export class DashboardComponent {
   /**
    * Este metodo crea un arreglo de opciones que seran devueltos a la metodo que llama esta para ser asignados a un grafico tipo radial
    * La estructura corresponde a un arreglo valido de opciones para un grafico de ApexCharts.
-   * 
+   *
    * @param id - String para identificar el grafico de manera interna.
    * @param etiqueta - String que se muestra en el grafico ya dibujado.
    * @param simbolo - Caracter que se muestra junto al valor del grafico, se utiliza "%"  y "°C".
-   * 
+   *
    * @returns Arreglo parcial en formato json con las opciones construidas para un tipo de grafico.
    */
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -516,9 +514,9 @@ export class DashboardComponent {
   /**
    * Este metodo crea un arreglo de opciones que seran devueltos a la metodo que llama esta para ser asignados a un grafico tipo ranura
    * La estructura corresponde a un arreglo valido de opciones para un grafico de ApexCharts.
-   * 
+   *
    * @param id - String para identificar el grafico de manera interna.
-   *  
+   *
    * @returns Arreglo parcial en formato json con las opciones construidas para un tipo de grafico.
    */
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -575,7 +573,7 @@ export class DashboardComponent {
      * A diferencia del grafico radial no compacto es que este tiene preestablecidas las etiquetas para cada campo monitoreado,
      * y solo se actualizan los datos asociados a estas etiquetas.
      * Para la unidad de medida por defecto se imprime el simbolo "%", para el campo con indice 3 (temperatura) se imprime "°C"
-     * 
+     *
      * @param id - String para identificar el grafico de manera interna.
      * @param titulo - Es el nombre del host para poder identificar a cual grafico corresponde
      * @returns Arreglo parcial en formato json con las opciones construidas para un tipo de grafico.
@@ -658,13 +656,13 @@ export class DashboardComponent {
 
 
   /**
-   * Este metodo obtiene todos los items con el tag "log", luego filtra por los que no entregan erroes, es decir, los que son 
+   * Este metodo obtiene todos los items con el tag "log", luego filtra por los que no entregan erroes, es decir, los que son
    * compatibles con el host que esta solicitando el log.
    * Por cada log encontrado guardamos su nombre e id de item, con este ultimo se obtiene el log completo.
-   * Cada entrada del array de respuesta se guarda como una linea que se va acumulando en un archivo que finalmente se descarga en texto plano .txt* 
-   * 
+   * Cada entrada del array de respuesta se guarda como una linea que se va acumulando en un archivo que finalmente se descarga en texto plano .txt*
+   *
    * @param hostid - id del host que pide el log
-   * 
+   *
    */
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -701,11 +699,11 @@ export class DashboardComponent {
 
   /**
    * Funcion generica para abrir un modal arbitrario
-   * 
+   *
    * Al abrir el modal para agrega un nuevo host se establece un tiempo de actualizacion de una hora, para impedir que los datos ingresados
    * se pierdan.
    * Si se ingresa el host correctamente o se cierra la ventana, se reinicia el intervalo a 15s.
-   * 
+   *
    * @param content - contenido que sera mostrado en el modal, este valor lo emite el template html
    */
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -736,7 +734,7 @@ export class DashboardComponent {
   /**
    * Este metodo crea un nuevo host en base a los datos ingresados en el formulario,
    * si los datos son validos se crea un nuevo host y se actualizan los graficos
-   * 
+   *
    */
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   guardar() {
@@ -777,8 +775,8 @@ export class DashboardComponent {
 
   /**
    * Metodo nativo del navegador para comprobar si realmente queremos eliminar el host, esto lo hace mediente el servicio,
-   * al cual le pasa la id del host que hemos seleccionado segun su elemento card en el html   * 
-   * 
+   * al cual le pasa la id del host que hemos seleccionado segun su elemento card en el html   *
+   *
    * @param hostid - id del host
    * @param nombre - nombre del host
    */
@@ -801,12 +799,12 @@ export class DashboardComponent {
   /**
    *  Activa el modo oscuro segun las variables del archivo styles.css
    */
-  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////  
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   onValChange() {
     document.body.classList.toggle('dark-theme');
   }
-  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////  
-  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////  
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
