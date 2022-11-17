@@ -21,8 +21,8 @@
             <td>{{ item.descripcion }}</td>
             <td>{{ item.cantidad}}</td>
             <td>
-              <i class="fa fa-pen text-info mr-2" [routerLink]="['/dashboard/edit-item', item.id]">editar</i>
-              <i (click)="eliminarItem(item.id)" class="fa fa-trash text-danger">eliminar</i>
+              <i class="fa-solid fa-pen-to-square text-info me-2" [routerLink]="['/dashboard/edit-item', item.id]">editar</i>
+              <i class="fa-solid fa-trash text-danger" (click)="eliminarItem(item.id)" >eliminar</i>
             </td>
           </tr>
         </tbody>
