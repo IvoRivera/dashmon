@@ -802,11 +802,12 @@ export class DashboardComponent {
   cambiarTipoVista() {
     if (this.modoCompacto == true) {
       this.modoCompacto = false
-      this.initGraficos(this.INTERVALOACTUALIZACION);
+      
     }
     else {
       this.modoCompacto = true
-      this.initGraficos(this.INTERVALOACTUALIZACION);
+      // HOTFIX:Se elimino la llamada a la funcion principal para evitar la duplicacion de las interfaces en el grafico de red
+      // los graficos demoran en cargar porque hay que esperar el siguiente intervalo de actualizacion
     }
   }
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
