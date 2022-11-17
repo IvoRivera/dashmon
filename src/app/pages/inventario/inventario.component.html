@@ -20,10 +20,16 @@
             <td>{{ item.nombre }}</td>
             <td>{{ item.descripcion }}</td>
             <td>{{ item.cantidad}}</td>
-            <td>
-              <i class="fa-solid fa-pen-to-square text-info me-2" [routerLink]="['/dashboard/edit-item', item.id]">editar</i>
-              <i class="fa-solid fa-trash text-danger" (click)="eliminarItem(item.id)" >eliminar</i>
-            </td>
+            <div class="row-cols-auto">
+              <div class="opcion text-info" [routerLink]="['/dashboard/edit-item', item.id]">
+                <i class="fa-solid fa-pen-to-square me-1"></i>
+                <span>Editar</span>
+              </div>
+              <div class="opcion text-danger" (click)="eliminarItem(item.id)">
+                <i class="fa-solid fa-trash me-1"></i>
+                <span>Eliminar</span>
+              </div>
+            </div>
           </tr>
         </tbody>
       </table>
