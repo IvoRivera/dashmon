@@ -24,7 +24,7 @@ export class RegisterComponent implements OnInit {
 
     try {
 
-     await this.authSvc.register(this.registerForm.value.email, this.registerForm.value.password).then((user) => {
+     await this.authSvc.register(this.registerForm.value.email!, this.registerForm.value.password!).then((user) => {
 
         Swal.fire({
           icon:'success',
@@ -41,17 +41,17 @@ export class RegisterComponent implements OnInit {
         })
 
       })
-      
+
     } catch (e:any) {
 
       Swal.fire('ERROR', 'La cuenta ya esta uso', 'error' );
 
       this.registerForm.reset();
-       
+
      }
 
 
-    
+
   }
 
 }

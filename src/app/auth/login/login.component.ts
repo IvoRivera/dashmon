@@ -43,7 +43,7 @@ export class LoginComponent implements OnInit {
   async login() {
     try {
       await this.authSvc
-        .login(this.loginForm.value.email, this.loginForm.value.password)
+        .login(this.loginForm.value.email!, this.loginForm.value.password!)
         .then((user) => {
           if (user && user.user.emailVerified) {
             this.router.navigateByUrl('/dashboard');
@@ -80,7 +80,7 @@ export class LoginComponent implements OnInit {
       localStorage.removeItem('remember');
     } else {
       if (e.target.checked) {
-        localStorage.setItem('email', this.loginForm.value.email);
+        localStorage.setItem('email', this.loginForm.value.email!);
         localStorage.setItem('remember', 'true');
       } else {
         this.loginForm.reset();

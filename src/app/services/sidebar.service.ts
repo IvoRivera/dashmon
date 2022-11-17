@@ -9,10 +9,7 @@ export class SidebarService {
     titulo:'Dashboard',
     icono:'nav-icon fas fa-tachometer-alt',
     submenu:[
-      {titulo:'Usuarios', url:'usuarios', icono:'fa fa-users'},
-      {titulo:'Productos', url:'productos', icono:'fa fa-cubes'},
-      {titulo:'Inventario', url:'inventario', icono:'fa fa-boxes'}
-
+      {titulo:'Inventario', url:'inventario', icono:'fa-solid fa-boxes-stacked'}
     ]
   }]
 
