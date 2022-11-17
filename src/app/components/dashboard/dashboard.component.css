@@ -8,10 +8,18 @@ p {
 }
 
 
-.Grafico{
-  display: inline-flex;
+
+.app-modal-window .modal-dialog {
+  width: 500px;
 }
-.Graficos{
-  display: inline-flex;
+
+
+button{
+  margin: 3px;
 }
+
+
+
+
+
 

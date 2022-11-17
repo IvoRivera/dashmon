@@ -1,7 +1,18 @@
 @import '~ngx-toastr/toastr';
 
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+
+html,
+body {
+  height: 100%;
+  max-width: 100%;
+  width: 100%;
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+
+}
+
+
 
 .wrapper {
   display: flex;
@@ -11,15 +22,12 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
   height: 100%;
 }
 
-.logo{
+.logo {
   height: 130px;
   margin-bottom: 10px;
 }
 
 .body {
-  width: 100%;
-  max-width: 400px;
-  margin: auto;
   padding: 30px;
   text-align: center;
 }
@@ -32,5 +40,65 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
   margin-left: 5px;
 }
 
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+
+
+#card {
+  background: rgb(159, 43, 43);
+  background: linear-gradient(90deg, rgb(194, 145, 80) 11%, rgb(252, 181, 89) 76%);
+}
+
+#cardCompacto {
+  background: rgb(159, 43, 43);
+  background: linear-gradient(90deg, rgb(194, 145, 80) 11%, rgb(252, 181, 89) 76%);
+}
+
+.mat-card-title,
+.mat-card-subtitle {
+  padding-left: 2%;
+  color: aliceblue;
+}
+
+.cardGraficoCompacto{
+  max-width: 400px;
+}
+
+.cardGrafico{
+  max-width: 600px;
+  min-width: 600px;
+}
+
+H1{
+  text-align:center;
+}
+
+
+
+body {
+  --text-color: #222;
+  --bkg-color: #fff;
+  --btn-txt-color: white;
+  --btn-bg-color: rgb(11, 88, 160);
+}
+body.dark-theme {
+  --text-color: #eee;
+  --bkg-color: #252222;
+  --btn-txt-color: rgb(46, 43, 43);
+  --btn-bg-color: rgb(20, 211, 195);
+}
+
+body {
+  background: var(--bkg-color);
+}
+
+h1,
+p {
+  color: var(--text-color);
+}
+button {
+  padding: 10px;
+  border: none;
+  border-radius: 2px;
+  color: var(--btn-txt-color);
+  background-color: var(--btn-bg-color);
+}

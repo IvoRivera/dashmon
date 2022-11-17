@@ -10,6 +10,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import {MatIconModule} from '@angular/material/icon'; 
 import { MatInputModule } from '@angular/material/input';
 import {HttpClientModule} from '@angular/common/http';
 import { NgApexchartsModule } from "ng-apexcharts";
@@ -27,14 +28,15 @@ import { InventarioComponent } from './components/inventario/inventario.componen
 import { CreateItemComponent } from './components/create-item/create-item.component';
 import { SidenavComponent } from './components/sidenav/sidenav.component';
 import { SpinnerComponent } from './shared/spinner/spinner.component';
-
+import {MatSelectModule} from '@angular/material/select'; 
 // Extra
 import { environment } from 'src/environments/environment';
 import { initializeApp, provideFirebaseApp } from '@angular/fire/app';
 import { provideAuth, getAuth } from '@angular/fire/auth';
 import { provideFirestore, getFirestore } from '@angular/fire/firestore';
-
-
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { GraficoComponent } from './components/dashboard/grafico/grafico.component';
+ 
 
 @NgModule({
   declarations: [
@@ -49,6 +51,7 @@ import { provideFirestore, getFirestore } from '@angular/fire/firestore';
     SpinnerComponent,
     RecuperarPasswordComponent,
     VerificarCorreoComponent,
+    GraficoComponent,
   ],
   imports: [
     BrowserModule,
@@ -62,11 +65,14 @@ import { provideFirestore, getFirestore } from '@angular/fire/firestore';
     FormsModule,
     HttpClientModule,
     NgApexchartsModule,
+    MatIconModule,
+    MatSelectModule,
     ToastrModule.forRoot(),
     BrowserAnimationsModule,    
     provideFirebaseApp(() => initializeApp(environment.firebase)),
     provideAuth(() => getAuth()),
     provideFirestore(() => getFirestore()),
+    NgbModule,
 
   ],
   providers: [],
