@@ -13,6 +13,17 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
+            "allowedCommonJsDependencies": [
+              "jspdf",
+              "canvg",
+              "apexcharts",
+              "sweetalert2",
+              "html2canvas",
+              "dompurify",
+              "rgbcolor",
+              "raf",
+              "core-js"
+            ],
             "outputPath": "dist/dashmon",
             "index": "src/index.html",
             "main": "src/main.ts",
