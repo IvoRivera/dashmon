@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { take, throwError } from 'rxjs';
+import { debounceTime, take, throwError } from 'rxjs';
 import { DataService } from '../../services/dataAPI/data.service'
 import { ModalDismissReasons, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { CODIGOSREQ } from './enum/CODIGOS';
@@ -24,6 +24,7 @@ export class DashboardComponent {
   protected chartOptionsCompacto: Partial<any>[] = [];                                 // Arreglo de opciones vacios para los graficos radiales compactos.
   protected active = 1;                                                                // ID de la pestaña activa en los componentes modal.
   private flagGraficos: boolean = false;                                               // Flag para indicar que los graficos ya han sido creados y evitar que se inicialicen en cada actualizacion.
+  private cargaInicial: boolean = true;                                                // Flag para indicar que las interfaces de red han sido identificadas y evitar que se dupliquen al cambiar de vista
   protected hosts: any[] = [];                                                         // Arreglo que contiene los datos de los host, es necesario para que se listen los nombres de los hosts.
   private modalRef: NgbModalRef;                                                       // Objeto que hace referencia al modal activo, es necesaria para abrir o cerrar el modal
   private closeResult = '';                                                            // Objeto necesario para el funcionamiento de los modal
@@ -68,7 +69,7 @@ export class DashboardComponent {
    * @param fb - Facilitador para crear formularios.
    */
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  constructor(private servicioDatos: DataService, private modalService: NgbModal, public fb: FormBuilder) {        
+  constructor(private servicioDatos: DataService, private modalService: NgbModal, public fb: FormBuilder) {
     this.formularioNuevoHost = this.fb.group({
       nombre: ['', [Validators.required, Validators.minLength(3), Validators.pattern('^[a-zA-Z0-9_]*$')]],
       ip: ['', [Validators.required, Validators.minLength(7), Validators.maxLength(15), Validators.pattern('^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$')]],
@@ -96,47 +97,49 @@ export class DashboardComponent {
    * Si el host esta activo, entonces se obtienen sus datos para mostrarlos en los graficos.
    * Si esta activo el modo compacto solo se cargan los datos de los graficos radiales, si no se cargan los datos de red adicionalmente,
    * los datos de red se cargan cada un minuto, para afectar al rendimiento del dashboard.
+   * Este metodo tambien verifica si se realizo una conexion correcta, invalida o incorrecta
    *
    * @param intervalo - numero en milisegundos en que se actualizan los datos
    */
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   initGraficos(intervalo: number) {
-    
+
     this.servicioDatos.getHosts().pipe(take(1)).subscribe({
-      next: (arregloHosts) => {  
-        if (arregloHosts !== null && arregloHosts !== undefined){
-        console.log("Conexion correcta ✅✅✅");
-          
-        if (!this.flagGraficos) this.crearGraficos(arregloHosts.length);
-        this.setNetSeries();
-        arregloHosts.forEach((host: any, i: number) => { //console.log(element);
-          this.hosts[i] = host;
-          this.hosts[i].ip = this.getIpHost(host.hostid, i);
-          if (host.active_available == 1) {
-            if (this.modoCompacto) {
-              setInterval(() => this.getDatosRadialesCompacto(host.hostid, i), intervalo)
-            } else {
-              setInterval(() => {
-                this.getDatosRadiales(host.hostid, i);
-                //this.getLogs(host.hostid);
-              }, intervalo)
-              setInterval(() => {
-                this.getDatosRanura(host.hostid, i);
-  
-              }, intervalo + 45000)
-            }
-          };
-        });} else {
+      next: (arregloHosts) => {
+        if (arregloHosts !== null && arregloHosts !== undefined) {
+          console.log("Conexion correcta ✅✅✅");
+
+          if (!this.flagGraficos) this.crearGraficos(arregloHosts.length);
+          if(this.cargaInicial)   this.setNetSeries();  
+          arregloHosts.forEach((host: any, i: number) => { //console.log(element);
+            this.hosts[i] = host;
+            this.hosts[i].ip = this.getIpHost(host.hostid, i);
+            if (host.active_available == 1) {
+              if (this.modoCompacto) {
+                setInterval(() => this.getDatosRadialesCompacto(host.hostid, i), intervalo)
+              } else {
+                setInterval(() => {
+                  this.getDatosRadiales(host.hostid, i);
+                }, intervalo)
+                setInterval(() => {
+                  this.getDatosRanura(host.hostid, i);
+
+                }, intervalo + 45000)
+              }
+            };
+          });
+        } else {
           console.log("Token invalido ❌");
-          
-          
+
+
         }
       },
-      error: (error) => {console.info("No se ha podido conectar al servidor o no se han proporcionado credenciales ❌");
+      error: (error) => {
+        console.info("No se ha podido conectar al servidor o no se han proporcionado credenciales ❌");
       },
-      complete: () => console.info("Conexion completa ✅") 
-    }    
-      );
+      complete: () => console.info("Conexion completa ✅")
+    }
+    );
   }
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -161,14 +164,20 @@ export class DashboardComponent {
    */
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   setNetSeries() {
-    this.servicioDatos.getHosts().pipe(take(1)).subscribe(arregloHosts => {  //console.log(arregloHosts);
-      arregloHosts.forEach((host: any, i: number) => { //console.log(element);
-        if (host.active_available == 1) {
-          this.getSeries(host.hostid, i);
-        };
-      });
-    });
-  }
+    this.servicioDatos.getHosts().pipe(take(1)).subscribe({
+      next: (arregloHosts) => {  
+        arregloHosts.forEach((host: any, i: number) => { //console.log(element);
+          if (host.active_available == 1) {
+            this.getSeries(host.hostid, i);
+          };
+        });
+      },
+      error: (error) =>{console.log(error);
+      },
+      complete: () => {this.cargaInicial = false;
+      }
+    }
+  )}
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -196,7 +205,7 @@ export class DashboardComponent {
           let recorte = res.result[i].name.substring(0, res.result[i].name.indexOf(':'));
           let nombreInterfaz = recorte.substr(recorte.indexOf(" ") + 1);
           this.addDatosRanura(hostid, itemid, indice, "IN", nombreInterfaz);
-          this.arrayInterfacesIN.push([nombreInterfaz, itemid, hostid])
+          this.arrayInterfacesIN.push([nombreInterfaz, itemid, hostid]);
           itemid = "";
         } else if (JSON.stringify(res.result[i]).indexOf("Bits sent") > 1) {
           itemid = res.result[i].itemid;
@@ -204,9 +213,11 @@ export class DashboardComponent {
           let nombreInterfaz = recorte.substr(recorte.indexOf(" ") + 1);
           this.addDatosRanura(hostid, itemid, indice, "OUT", nombreInterfaz);
           this.arrayInterfacesOUT.push([nombreInterfaz, itemid, hostid])
-          itemid = "";
         }
+        itemid = "";
       }
+
+      
     });
   }
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -288,6 +299,8 @@ export class DashboardComponent {
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   getDatosRanura(hostid: number, indice: number): void {
     this.chartOptions[indice][4] = this.defineGraficoRanura("graficoNET" + indice + 4);
+    console.log(this.arrayInterfacesIN);
+    
     this.arrayInterfacesIN.forEach(element => {
       if (element[2] == String(hostid))
         this.updateDatosRanura(hostid, element[1], indice, "IN", element[0]);
@@ -801,7 +814,7 @@ export class DashboardComponent {
       this.formularioConexion.markAllAsTouched();
       return;
     }
-    
+
     let ip = this.formularioConexion.get("ip")?.value;
     let puerto = this.formularioConexion.get("puerto")?.value;
     let token = this.formularioConexion.get("token")?.value;
