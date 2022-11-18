@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { take } from 'rxjs';
+import { take, throwError } from 'rxjs';
 import { DataService } from '../../services/dataAPI/data.service'
 import { ModalDismissReasons, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { CODIGOSREQ } from './enum/CODIGOS';
@@ -32,7 +32,8 @@ export class DashboardComponent {
   private arrayInterfacesOUT: any[][] = []                                             // Array global que contiene las interfaces y host asociado para los datos de salida
   protected logs: any[] = [];                                                          // Arreglo que guarda temporalmente las entradas del log solicitado para descargarlo
   private nuevoHost: Hosts;                                                            // Objeto vacio a rellenar con los datos de un nuevo host al agregarlo por formulario.
-  protected miFormulario: FormGroup;                                                   // Formulario para agregar un nuevo host.
+  protected formularioNuevoHost: FormGroup;                                            // Formulario para agregar un nuevo host.
+  protected formularioConexion: FormGroup;                                             // Formulario para agregar un nuevo host.
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -41,13 +42,12 @@ export class DashboardComponent {
    * A continuacion se declaran y describen las constantes utilizadas para el funcionamiento del dashboard
    */
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  private INTERVALOACTUALIZACION = 5000;                                               // Intervalo de actualizacion
-  private LIMITELOGS = 0;                                                          // Limite de resultados de los logs
-  private HOST = "http://192.168.1.15";     // Tes                                     // Direccion del host servidor
-  //private HOST = "http://100.100.100.2";  // Lab                                     // Direccion del host servidor
-  private PUERTO = ":80";                   // Tes                                     // Puerto del servidor
-  //private PUERTO = ":8080";               // Lab                                     // Puerto del servidor
-  private TOKEN = "15c21907aecb9c007bc270252bbadb6f0e181ceb58afeb8e42dae78cf7264b65"; // Test // Token de autorizacion
+  private INTERVALOACTUALIZACION = 5000;                                                // Intervalo de actualizacion
+  //private HOST = "http://192.168.1.15";   // Test                                     // Direccion del host servidor
+  //private HOST = "http://100.100.100.2";  // Lab                                      // Direccion del host servidor
+  //private PUERTO = ":80";                 // Test                                     // Puerto del servidor
+  //private PUERTO = ":8080";               // Lab                                      // Puerto del servidor
+  //private TOKEN = "15c21907aecb9c007bc270252bbadb6f0e181ceb58afeb8e42dae78cf7264b65"; // Test // Token de autorizacion
   //private TOKEN = "89a46f0f282ad3c45110c751062f21066eb1765131844c7eb3fdce28e7134285"; // Lab // Token de autorizacion
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -61,22 +61,25 @@ export class DashboardComponent {
    * El servicioDatos llama los metodos para establecer la direccion ip del servidor, puerto y token de autenticacion.
    * En el constructor se declaran e inicializan los servicios para comunicarse con el backend, componentes modales y formularios.
    * Despues se declara e inicializa el formulario para agregar un nuevo host cuando se necesite.
+   * Finalmente se declara e inicializa el formulario para conectarse a un servidor, de ser necesario
    *
    * @param servicioDatos - Servicio para comunicarse con el backend.
    * @param modalService - Servicio para comunicarse con el componente modal.
    * @param fb - Facilitador para crear formularios.
    */
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  constructor(private servicioDatos: DataService, private modalService: NgbModal, public fb: FormBuilder) {
-    this.servicioDatos.setHost(this.HOST);
-    this.servicioDatos.setPuerto(this.PUERTO);
-    this.servicioDatos.setToken(this.TOKEN);
-    this.initGraficos(this.INTERVALOACTUALIZACION);
-    this.miFormulario = this.fb.group({
+  constructor(private servicioDatos: DataService, private modalService: NgbModal, public fb: FormBuilder) {        
+    this.formularioNuevoHost = this.fb.group({
       nombre: ['', [Validators.required, Validators.minLength(3), Validators.pattern('^[a-zA-Z0-9_]*$')]],
-      ip: ['', [Validators.required, Validators.minLength(7), Validators.pattern('^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$')]],
+      ip: ['', [Validators.required, Validators.minLength(7), Validators.maxLength(15), Validators.pattern('^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$')]],
       tag: ['', [Validators.required, Validators.minLength(3)]],
     });
+    this.formularioConexion = this.fb.group({
+      ip: ['', [Validators.required, Validators.minLength(7), Validators.maxLength(15), Validators.pattern('^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$')]],
+      puerto: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(6), Validators.pattern('^((6553[0-5])|(655[0-2][0-9])|(65[0-4][0-9]{2})|(6[0-4][0-9]{3})|([1-5][0-9]{4})|([0-5]{0,5})|([0-9]{1,4}))$')]],
+      token: ['', [Validators.required, Validators.minLength(3)]],
+    });
+    this.initGraficos(5000);
   }
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -98,38 +101,52 @@ export class DashboardComponent {
    */
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   initGraficos(intervalo: number) {
-    this.servicioDatos.getHosts().pipe(take(1)).subscribe(arregloHosts => {  //console.log(arregloHosts);
-      if (!this.flagGraficos) this.crearGraficos(arregloHosts.length);
-      this.setNetSeries();
-      arregloHosts.forEach((host: any, i: number) => { //console.log(element);
-        this.hosts[i] = host;
-        this.hosts[i].ip = this.getIpHost(host.hostid,i);
-        if (host.active_available == 1) {
-          if (this.modoCompacto) {
-            setInterval(() => this.getDatosRadialesCompacto(host.hostid, i), intervalo)
-          } else {
-            setInterval(() => {
-              this.getDatosRadiales(host.hostid, i);
-              //this.getLogs(host.hostid);
-            }, intervalo)
-            setInterval(() => {
-              this.getDatosRanura(host.hostid, i);
-
-            }, intervalo + 45000)
-          }
-        };
-      });
-    });
+    
+    this.servicioDatos.getHosts().pipe(take(1)).subscribe({
+      next: (arregloHosts) => {  
+        if (arregloHosts !== null && arregloHosts !== undefined){
+        console.log("Conexion correcta ✅✅✅");
+          
+        if (!this.flagGraficos) this.crearGraficos(arregloHosts.length);
+        this.setNetSeries();
+        arregloHosts.forEach((host: any, i: number) => { //console.log(element);
+          this.hosts[i] = host;
+          this.hosts[i].ip = this.getIpHost(host.hostid, i);
+          if (host.active_available == 1) {
+            if (this.modoCompacto) {
+              setInterval(() => this.getDatosRadialesCompacto(host.hostid, i), intervalo)
+            } else {
+              setInterval(() => {
+                this.getDatosRadiales(host.hostid, i);
+                //this.getLogs(host.hostid);
+              }, intervalo)
+              setInterval(() => {
+                this.getDatosRanura(host.hostid, i);
+  
+              }, intervalo + 45000)
+            }
+          };
+        });} else {
+          console.log("Token invalido ❌");
+          
+          
+        }
+      },
+      error: (error) => {console.info("No se ha podido conectar al servidor o no se han proporcionado credenciales ❌");
+      },
+      complete: () => console.info("Conexion completa ✅") 
+    }    
+      );
   }
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
-  getIpHost(hostid:number,indice:number){
+  getIpHost(hostid: number, indice: number) {
     this.servicioDatos.getInterfacesHosts(hostid).subscribe((res) => {
       res.result.forEach(element => {
-        if(element.useip == "1"){
+        if (element.useip == "1") {
           this.hosts[indice].ip = element.ip
         }
       });
@@ -671,7 +688,7 @@ export class DashboardComponent {
       res.forEach((element: any) => {
         if (element.error == "") {
           let nombreLog = element.name;
-          this.servicioDatos.getLogs(hostid, element.itemid, this.LIMITELOGS).pipe(take(1)).subscribe((res) => {
+          this.servicioDatos.getLogs(hostid, element.itemid).pipe(take(1)).subscribe((res) => {
             res.result.forEach((element: any, i: number) => {
               this.logs.push(element.value)
             });
@@ -737,21 +754,21 @@ export class DashboardComponent {
    *
    */
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  guardar() {
-    if (this.miFormulario.invalid) {
-      this.miFormulario.markAllAsTouched();
+  agregarNuevoHost() {
+    if (this.formularioNuevoHost.invalid) {
+      this.formularioNuevoHost.markAllAsTouched();
       return;
     }
     this.nuevoHost = {
-      nombre: this.miFormulario.get("nombre")?.value,
-      ip: this.miFormulario.get("ip")?.value,
-      tag: this.miFormulario.get("tag")?.value,
+      nombre: this.formularioNuevoHost.get("nombre")?.value,
+      ip: this.formularioNuevoHost.get("ip")?.value,
+      tag: this.formularioNuevoHost.get("tag")?.value,
 
     }
     console.log(this.nuevoHost);
-    this.servicioDatos.crearHost(this.miFormulario.get("nombre")?.value, this.miFormulario.get("ip")?.value, this.miFormulario.get("tag")?.value).subscribe(datos => {
+    this.servicioDatos.crearHost(this.formularioNuevoHost.get("nombre")?.value, this.formularioNuevoHost.get("ip")?.value, this.formularioNuevoHost.get("tag")?.value).subscribe(datos => {
       this.modalRef.close()
-      this.miFormulario.reset();
+      this.formularioNuevoHost.reset();
     });
     this.flagGraficos = false;
     this.initGraficos(this.INTERVALOACTUALIZACION);
@@ -766,7 +783,38 @@ export class DashboardComponent {
    */
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   resetearCampos() {
-    this.miFormulario.reset();
+    this.formularioNuevoHost.reset();
+  }
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+  /**
+     * Este metodo crea una conexion con el servidor segun los datos de direccion ip, puerto y token que se le ingresen 
+     * por formulario
+     *
+     */
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  realizarConexion() {
+    if (this.formularioConexion.invalid) {
+      this.formularioConexion.markAllAsTouched();
+      return;
+    }
+    
+    let ip = this.formularioConexion.get("ip")?.value;
+    let puerto = this.formularioConexion.get("puerto")?.value;
+    let token = this.formularioConexion.get("token")?.value;
+
+
+    console.log("IP: " + ip, "Puerto: " + puerto, "Token: **************************************************************");
+    this.servicioDatos.setHost(ip);
+    this.servicioDatos.setPuerto(puerto);
+    this.servicioDatos.setToken(token);
+    this.formularioConexion.reset();
+    this.modalRef.close()
+    this.flagGraficos = false;
+    this.initGraficos(this.INTERVALOACTUALIZACION);
   }
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

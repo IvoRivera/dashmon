@@ -1,17 +1,151 @@
 <div class="container-fluid ">
   <div class="row">
 
+    <!-- Barra de control-->
+    <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////////-->
+    <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////////-->
+    <div>
+      <button class="btn btn-primary" mat-button (click)="abrirModal(conectar)">Conectar a servidor</button>
+      <button class="btn btn-primary" mat-button (click)="abrirModal(crearHost)">Agregar nuevo host</button>
+      <div style="float: right; padding-right: 20px;">
+        <button id="botonModoOscuro" (click)="onValChange()" mat-fab color="primary" aria-label="Modo oscuro"
+          style="float: right;">
+          <mat-icon>lightbulb</mat-icon>
+        </button>
+        <button (click)="cambiarTipoVista()" mat-fab color="primary" aria-label="tipo de vista" style="float: right;">
+          <mat-icon>visibility</mat-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+  <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////////-->
+  <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////////-->
+  <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////////-->
 
-    <!-- Agregar nuevo host -->
-    <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////////-->
-    <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////////-->
+
+
+
+  <!-- Graficos-->
+  <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////////-->
+  <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////////-->
+  <div class="row grafico">
+    <div *ngFor="let host of hosts; let i = index" class="col-auto  ">
+      <div *ngIf="modoCompacto == true; then compacto else extendido"></div>
+      <ng-template #compacto>
+        <div class="cardGraficoCompacto">
+          <mat-card id="cardCompacto">
+            <p>IP: {{host.ip}}</p>
+            <mat-card-title>
+              Servidor: {{host.host}}
+              <button type="button" class="btn-close" (click)="clickMethod(host.hostid, host.host)"
+                style="float: right;"></button>
+            </mat-card-title>
+            <apx-chart [series]="chartOptionsCompacto[i]['series']" [chart]="chartOptionsCompacto[i]['chart']"
+              [plotOptions]="chartOptionsCompacto[i]['plotOptions']" [labels]="chartOptionsCompacto[i]['labels']"
+              [legend]="chartOptionsCompacto[i]['legend']" [colors]="chartOptionsCompacto[i]['colors']"
+              [responsive]="chartOptionsCompacto[i]['responsive']" [title]="chartOptionsCompacto[i]['title']">
+            </apx-chart>
+          </mat-card>
+          <br>
+        </div>
+      </ng-template>
+
+      <ng-template #extendido>
+        <div class="cardGrafico">
+          <mat-card id="card">
+            <p>IP: {{host.ip}}</p>
+            <div *ngIf="host.active_available == '1'; then activo else inactivo"></div>
+            <ng-template #activo>
+              <div class="row">
+                <div class="col-8">
+                  <mat-card-title>
+                    Servidor: {{host.host}}
+                  </mat-card-title>
+                  <mat-card-subtitle>
+                    Status: Online <span>🟢</span>
+                  </mat-card-subtitle>
+                </div>
+                <div class="col-4">
+                  <button type="button" class="btn-close" (click)="clickMethod(host.hostid, host.host)"
+                    style="float: right;"></button>
+
+                  <mat-card-actions align="end">
+                    <button mat-button id="botonLog" class="btn btn-light" (click)="obtenerLogs(host.hostid)">Descargar
+                      Logs</button>
+                  </mat-card-actions>
+                </div>
+              </div>
+
+
+              <div class="row GraficosRadial">
+                <div class="col-3" *ngFor="let j of [0,1,2,3]">
+                  <apx-chart [series]="chartOptions[i][j]['series']" [chart]="chartOptions[i][j]['chart']"
+                    [xaxis]="chartOptions[i][j]['xaxis']" [title]="chartOptions[i][j]['title']"
+                    [stroke]="chartOptions[i][j]['stroke']" [fill]="chartOptions[i][j]['fill']"
+                    [tooltip]="chartOptions[i][j]['tooltip']" [plotOptions]="chartOptions[i][j]['plotOptions']"
+                    [labels]="chartOptions[i][j]['labels']"></apx-chart>
+                </div>
+              </div>
+              <div id="graficoSpline" class="row">
+                <div class="col-12">
+                  <apx-chart [series]="chartOptions[i][4]['series']" [chart]="chartOptions[i][4]['chart']"
+                    [title]="chartOptions[i][4]['title']" [stroke]="chartOptions[i][4]['stroke']"
+                    [xaxis]="chartOptions[i][4]['xaxis']" [dataLabels]="chartOptions[i][4]['dataLabels']"
+                    [plotOptions]="chartOptions[i][4]['plotOptions']" [tooltip]="chartOptions[i][4]['tooltip']">
+                  </apx-chart>
+                </div>
+              </div>
+            </ng-template>
+            <ng-template #inactivo>
+              <div class="cardGrafico">
+                <mat-card-title>
+                  Servidor: {{host.host}}
+                </mat-card-title>
+                <mat-card-subtitle>
+                  Status: Offline <span>🔴</span>
+                </mat-card-subtitle>
+              </div>
+              <button type="button" class="btn-close" (click)="clickMethod(host.hostid, host.host)"
+                style="float: right; position: relative;top: -60px;"></button>
+            </ng-template>
+            <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////////-->
+            <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////////-->
+            <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////////-->
+            <ng-template #logs let-modal>
+              <div class="modal-header">
+                <h4 class="modal-title" id="modal-basic-title">Logs</h4>
+                <button type="button" class="btn-close" aria-label="Close"
+                  (click)="modal.dismiss('Cross click')"></button>
+              </div>
+              <div class="modal-body">
+
+                <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////////-->
+                <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////////-->
+                <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////////-->
+              </div>
+            </ng-template>
+          </mat-card>
+        </div>
+        <br>
+      </ng-template>
+    </div>
+  </div>
+  <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////////-->
+  <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////////-->
+  <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////////-->
+
+
+
+  <!-- Agregar nuevo host -->
+  <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////////-->
+  <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////////-->
   <ng-template #crearHost let-modal>
     <div class="modal-header">
       <h4 class="modal-title" id="modal-basic-title">Agregar nuevo host</h4>
       <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Cross click')"></button>
     </div>
     <div class="modal-body">
-      <form autocomplete="off" [formGroup]="miFormulario" (ngSubmit)="guardar()" novalidate>
+      <form autocomplete="off" [formGroup]="formularioNuevoHost" (ngSubmit)="agregarNuevoHost()" novalidate>
 
         <!-- Nombres -->
         <div class="mb-3 row">
@@ -19,12 +153,12 @@
           <div class="col-sm-9">
             <input class="form-control" formControlName="nombre" placeholder="Ingrese el nombre del host">
             <div
-              *ngIf="miFormulario.controls['nombre'].invalid && (miFormulario.controls['nombre'].dirty || miFormulario.controls['nombre'].touched)"
+              *ngIf="formularioNuevoHost.controls['nombre'].invalid && (formularioNuevoHost.controls['nombre'].dirty || formularioNuevoHost.controls['nombre'].touched)"
               class="alert alert-danger">
-              <div *ngIf="miFormulario.controls['nombre'].hasError('required')">
+              <div *ngIf="formularioNuevoHost.controls['nombre'].hasError('required')">
                 <span>* Campo obligatorio</span>
               </div>
-              <div *ngIf="(miFormulario.controls['nombre'].dirty)">
+              <div *ngIf="(formularioNuevoHost.controls['nombre'].dirty)">
                 <span>* Campo invalido</span>
               </div>
             </div>
@@ -37,12 +171,12 @@
           <div class="col-sm-9">
             <input class="form-control" formControlName="ip" placeholder="Ingrese el ip del host">
             <div
-              *ngIf="miFormulario.controls['ip'].invalid && (miFormulario.controls['ip'].dirty || miFormulario.controls['ip'].touched)"
+              *ngIf="formularioNuevoHost.controls['ip'].invalid && (formularioNuevoHost.controls['ip'].dirty || formularioNuevoHost.controls['ip'].touched)"
               class="alert alert-danger">
-              <div *ngIf="miFormulario.controls['ip'].hasError('required')">
+              <div *ngIf="formularioNuevoHost.controls['ip'].hasError('required')">
                 <span>* Campo obligatorio</span>
               </div>
-              <div *ngIf="(miFormulario.controls['ip'].dirty)">
+              <div *ngIf="(formularioNuevoHost.controls['ip'].dirty)">
                 <span>* Campo invalido</span>
               </div>
             </div>
@@ -55,12 +189,12 @@
           <div class="col-sm-9">
             <input class="form-control" formControlName="tag" placeholder="Ingrese una etiqueta para el host">
             <div
-              *ngIf="miFormulario.controls['tag'].invalid && (miFormulario.controls['tag'].dirty || miFormulario.controls['tag'].touched)"
+              *ngIf="formularioNuevoHost.controls['tag'].invalid && (formularioNuevoHost.controls['tag'].dirty || formularioNuevoHost.controls['tag'].touched)"
               class="alert alert-danger">
-              <div *ngIf="miFormulario.controls['tag'].hasError('required')">
+              <div *ngIf="formularioNuevoHost.controls['tag'].hasError('required')">
                 <span>* Campo obligatorio</span>
               </div>
-              <div *ngIf="(miFormulario.controls['tag'].dirty)">
+              <div *ngIf="(formularioNuevoHost.controls['tag'].dirty)">
                 <span>* Campo invalido</span>
               </div>
             </div>
@@ -72,7 +206,8 @@
         <div class="row">
           <div class="col-sm-3"></div>
           <div class="col-sm-9">
-            <button class="btn btn-success" type="button" data-dismiss="crearHost" (click)="guardar()">Crear</button>
+            <button class="btn btn-success" type="button" data-dismiss="crearHost"
+              (click)="agregarNuevoHost()">Crear</button>
             <button class="btn btn-warning" type="button" (click)="resetearCampos()">Limpiar campos</button>
             <button class="btn btn-danger" type="button" (click)="modal.dismiss('Cross click')">Cancelar</button>
           </div>
@@ -80,144 +215,94 @@
       </form>
     </div>
   </ng-template>
-  <div>
-    <button class="btn btn-primary" mat-button (click)="abrirModal(crearHost)">Agregar nuevo host</button>
-    <div style="float: right; padding-right: 20px;">
-    <button id="botonModoOscuro" (click)="onValChange()" mat-fab color="primary" aria-label="Modo oscuro" style="float: right;">
-      <mat-icon>lightbulb</mat-icon>
-    </button>
-    <button (click)="cambiarTipoVista()" mat-fab color="primary" aria-label="tipo de vista" style="float: right;">
-      <mat-icon>visibility</mat-icon>
-    </button>
+  <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////////-->
+  <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////////-->
+  <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////////-->
+
+
+
+
+
+  <!-- Conectar a servidor -->
+  <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////////-->
+  <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////////-->
+  <ng-template #conectar let-modal>
+    <div class="modal-header">
+      <h4 class="modal-title" id="modal-basic-title">Conectar a servidor</h4>
+      <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Cross click')"></button>
     </div>
-  </div>
-</div>
-  <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////////-->
-  <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////////-->
-  <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////////-->
+    <div class="modal-body">
+      <form autocomplete="off" [formGroup]="formularioConexion" (ngSubmit)="agregarNuevoHost()" novalidate>
 
- 
-
-
-  <!-- Graficos-->
-  <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////////-->
-  <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////////-->
-  <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////////-->
-  <div class="row grafico  ">
-
-    <div *ngFor="let host of hosts; let i = index" class="col-auto  ">
-      <div *ngIf="modoCompacto == true; then compacto else extendido"></div>
-
-      <ng-template #compacto>
-        <div class="cardGraficoCompacto">
-          <mat-card id="cardCompacto">
-            <p>ip: {{host.ip}}</p>
-          <mat-card-title>
-            Servidor: {{host.host}}
-            <button type="button" class="btn-close" (click)="clickMethod(host.hostid, host.host)" style="float: right;"></button>
-          </mat-card-title>
-
-          <apx-chart [series]="chartOptionsCompacto[i]['series']" [chart]="chartOptionsCompacto[i]['chart']"
-            [plotOptions]="chartOptionsCompacto[i]['plotOptions']" [labels]="chartOptionsCompacto[i]['labels']"
-            [legend]="chartOptionsCompacto[i]['legend']" [colors]="chartOptionsCompacto[i]['colors']"
-            [responsive]="chartOptionsCompacto[i]['responsive']" [title]="chartOptionsCompacto[i]['title']"></apx-chart>
-        </mat-card>
-        <br>
-      </div>
-      </ng-template>
-
-      <ng-template #extendido>
-        <div class="cardGrafico">
-          <mat-card id="card">
-          <p>IP: {{host.ip}}</p>
-          <div *ngIf="host.active_available == '1'; then activo else inactivo"></div>
-          <ng-template #activo>
-            <div class="row">
-              <div class="col-8">
-            <mat-card-title>
-              Servidor: {{host.host}}
-            </mat-card-title>
-            <mat-card-subtitle>
-              Status: Online <span>🟢</span>
-            </mat-card-subtitle>
-          </div>
-            <div class="col-4">
-            <button type="button" class="btn-close" (click)="clickMethod(host.hostid, host.host)" style="float: right;"></button>
-            
-            <mat-card-actions align="end">
-              <button mat-button id="botonLog" class="btn btn-light" (click)="obtenerLogs(host.hostid)">Descargar Logs</button>
-            </mat-card-actions>
-          </div>
-          </div>
-
-
-            <div class="row GraficosRadial">
-              <div class="col-3" *ngFor="let j of [0,1,2,3]">
-                <apx-chart [series]="chartOptions[i][j]['series']" [chart]="chartOptions[i][j]['chart']"
-                  [xaxis]="chartOptions[i][j]['xaxis']" [title]="chartOptions[i][j]['title']"
-                  [stroke]="chartOptions[i][j]['stroke']" [fill]="chartOptions[i][j]['fill']"
-                  [tooltip]="chartOptions[i][j]['tooltip']" [plotOptions]="chartOptions[i][j]['plotOptions']"
-                  [labels]="chartOptions[i][j]['labels']"></apx-chart>
+        <!-- IP -->
+        <div class="mb-3 row">
+          <label class="col-sm-3 col-form-label">IP</label>
+          <div class="col-sm-9">
+            <input class="form-control" formControlName="ip" placeholder="10.10.10.10">
+            <div
+              *ngIf="formularioConexion.controls['ip'].invalid && (formularioConexion.controls['ip'].dirty || formularioConexion.controls['ip'].touched)"
+              class="alert alert-danger">
+              <div *ngIf="formularioConexion.controls['ip'].hasError('required')">
+                <span>* Campo obligatorio</span>
+              </div>
+              <div *ngIf="(formularioConexion.controls['ip'].dirty)">
+                <span>* Campo invalido</span>
               </div>
             </div>
-            <div id="graficoSpline" class="row">
-              <div class="col-12">
-                <apx-chart [series]="chartOptions[i][4]['series']" [chart]="chartOptions[i][4]['chart']"
-                  [title]="chartOptions[i][4]['title']" [stroke]="chartOptions[i][4]['stroke']"
-                  [xaxis]="chartOptions[i][4]['xaxis']" [dataLabels]="chartOptions[i][4]['dataLabels']"
-                  [plotOptions]="chartOptions[i][4]['plotOptions']" [tooltip]="chartOptions[i][4]['tooltip']">
-                </apx-chart>
+          </div>
+        </div>
+
+        <!-- Puerto -->
+        <div class="mb-3 row">
+          <label class="col-sm-3 col-form-label">Puerto</label>
+          <div class="col-sm-9">
+            <input class="form-control" formControlName="puerto" placeholder="1234">
+            <div
+              *ngIf="formularioConexion.controls['puerto'].invalid && (formularioConexion.controls['puerto'].dirty || formularioConexion.controls['puerto'].touched)"
+              class="alert alert-danger">
+              <div *ngIf="formularioConexion.controls['puerto'].hasError('required')">
+                <span>* Campo obligatorio</span>
+              </div>
+              <div *ngIf="(formularioConexion.controls['puerto'].dirty)">
+                <span>* Campo invalido</span>
               </div>
             </div>
-          </ng-template>
-          <ng-template #inactivo>
-            <div class="cardGrafico">
-              <mat-card-title>                
-                Servidor: {{host.host}}
-              </mat-card-title>
-            <mat-card-subtitle>
-              Status: Offline <span>🔴</span>
-            </mat-card-subtitle>
           </div>
-          <button type="button" class="btn-close" (click)="clickMethod(host.hostid, host.host)" style="float: right; position: relative;top: -60px;"></button>
-          </ng-template>
+        </div>
 
-          <ng-template #infoExt let-modal>
+        <!-- Token -->
+        <div class="mb-3 row">
+          <label class="col-sm-3 col-form-label">Token</label>
+          <div class="col-sm-9">
+            <input class="form-control" type="password" formControlName="token" placeholder="">
+            <div
+              *ngIf="formularioConexion.controls['token'].invalid && (formularioConexion.controls['token'].dirty || formularioConexion.controls['token'].touched)"
+              class="alert alert-danger">
+              <div *ngIf="formularioConexion.controls['token'].hasError('required')">
+                <span>* Campo obligatorio</span>
+              </div>
+              <div *ngIf="(formularioConexion.controls['token'].dirty)">
+                <span>* Campo invalido</span>
+              </div>
+            </div>
+          </div>
+        </div>
 
-            <div class="modal-header">
-              <h4 class="modal-title" id="modal-basic-title">Mas informacion</h4>
-              <button type="button" class="btn-close" aria-label="Close"
-                (click)="modal.dismiss('Cross click')"></button>
-            </div>
-            <div class="modal-body">
-            </div>
-          </ng-template>
 
-          <ng-template #logs let-modal>
-            <div class="modal-header">
-              <h4 class="modal-title" id="modal-basic-title">Logs</h4>
-              <button type="button" class="btn-close" aria-label="Close"
-                (click)="modal.dismiss('Cross click')"></button>
-            </div>
-            <div class="modal-body">
-              
-            
-            </div>
-          </ng-template>
-        </mat-card>
-      </div>
-        <br>
-      </ng-template>
+        <!-- botones cancelar y crear -->
+        <div class="row">
+          <div class="col-sm-3"></div>
+          <div class="col-sm-9">
+            <button class="btn btn-success" type="button" data-dismiss="conectar"
+              (click)="realizarConexion()">Conectar</button>
+            <button class="btn btn-warning" type="button" (click)="resetearCampos()">Limpiar campos</button>
+            <button class="btn btn-danger" type="button" (click)="modal.dismiss('Cross click')">Cancelar</button>
+          </div>
+        </div>
+      </form>
     </div>
-  </div>
+  </ng-template>
 </div>
-
-
-
-
-
-
-
 <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////////-->
 <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////////-->
 <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////////-->

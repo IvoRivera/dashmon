@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { map, Observable, retry } from 'rxjs';
+import { map, NEVER, Observable, retry, throwError } from 'rxjs';
 
 import { DatosHosts } from '../../../interfaces/datos-hosts';
 import { HttpClient } from '@angular/common/http';
@@ -43,10 +43,10 @@ export class DataService {
   protected token: string;
 
   setHost(ip: string) {
-    this.host = ip;
+    this.host = "http://"+ip;
   }
   setPuerto(puerto: string) {
-    this.puerto = puerto;
+    this.puerto = ":"+puerto;
   }
   setToken(token: string) {
     this.token = token;
@@ -65,11 +65,13 @@ export class DataService {
 
   /**
    * Este metodo obtiene todos los hosts registrados en el servidor mediante una llamada HTTP
+   * si no se han ingresado datos devuelve un observable vacio
    * 
    * @returns Un objeto observable con los datos obtenidos 
    */
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   getHosts(): Observable<any> {
+    
     const id = 1;
     const url = this.host + this.puerto + '/api_jsonrpc.php';
     const headers = { "Content-Type": "application/json" };
@@ -80,10 +82,11 @@ export class DataService {
       },
       "auth": this.token, "id": id
     };
-
+    
     return this.http.post<any>(url, req, { headers }).pipe(
       map(res => res.result),
       retry(3))
+    
   }
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////  
@@ -251,7 +254,7 @@ export class DataService {
    * @returns 
    */
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  getLogs(idZabbix: number, itemid: string,limite:number): Observable<DatosHosts> {
+  getLogs(idZabbix: number, itemid: string): Observable<DatosHosts> {
 
 
     const id = 2;
