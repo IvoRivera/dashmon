@@ -1,49 +1,73 @@
-<div class="hold-transition register-page">
-    <div class="register-box animate__animated animate__backInLeft">
-        <div class="register-logo">
-            <a href="../../index2.html"><b>Admin</b>LTE</a>
-        </div>
-
-        <div class="card ">
-            <div class="card-body register-card-body">
-                <p class="login-box-msg">Register a new membership</p>
-
-                <form (ngSubmit)="onRegister()" [formGroup]="registerForm" >
-
-                    <div class="input-group mb-3">
-                        <input type="email" class="form-control" placeholder="Email" formControlName="email" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,3}$" required>
-                        <div class="input-group-append">
-                            <div class="input-group-text">
-                                <span class="fas fa-envelope" style="color: rgb(48, 37, 37);"></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="input-group mb-3">
-                        <input type="password" class="form-control" formControlName="password" placeholder="Password" required >
-                        <div class="input-group-append">
-                            <div class="input-group-text">
-                                <span class="fas fa-lock" style="color: rgb(48, 37, 37);;"></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-8">
-
-                        </div>
-                        <!-- /.col -->
-                        <div class="col-4">
-                            <button type="submit" class="btn btn-outline-secondary btn-block" [disabled]="registerForm.invalid">Register</button>
-                        </div>
-                        <!-- /.col -->
-                    </div>
-                </form>
-
-                <a routerLink="/login" class="text-center link-reg">Ya tengo una cuenta</a>
+<section class="vh-100 login-page">
+  <div class="container py-5 h-100">
+    <div class="row d-flex justify-content-center align-items-center h-100">
+      <div class="col-12 col-md-8 col-lg-6 col-xl-5">
+        <div
+          class="card shadow-2-strong login-card-body"
+          style="border-radius: 2rem"
+        >
+          <div class="card-body p-5 text-center">
+            <div class="login-logo">
+              <img src="../../../assets/dist/img/LogoPrincipal.png" />
             </div>
-            <!-- /.form-box -->
+            <h4 class="my-5">Registro</h4>
+
+            <form (ngSubmit)="onRegister()" [formGroup]="registerForm">
+              <div class="input-group mb-3">
+                <input
+                  type="email"
+                  class="form-control"
+                  placeholder="Email"
+                  formControlName="email"
+                  pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,3}$"
+                  required
+                />
+                <div class="input-group-append">
+                  <div class="input-group-text">
+                    <span
+                      class="fas fa-envelope"
+                      style="color: rgb(48, 37, 37)"
+                    ></span>
+                  </div>
+                </div>
+              </div>
+              <div class="input-group mb-3">
+                <input
+                  type="password"
+                  class="form-control"
+                  formControlName="password"
+                  placeholder="Password"
+                  required
+                />
+                <div class="input-group-append">
+                  <div class="input-group-text">
+                    <span
+                      class="fas fa-lock"
+                      style="color: rgb(48, 37, 37)"
+                    ></span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col">
+                  <button
+                    type="submit"
+                    class="btn btn-outline-secondary btn-block"
+                    [disabled]="registerForm.invalid"
+                  >
+                    Registrarse
+                  </button>
+                </div>
+              </div>
+            </form>
+            <hr />
+            <a routerLink="/login" class="text-center link-reg"
+              >Ya tengo una cuenta</a
+            >
+          </div>
         </div>
-        <!-- /.card -->
+      </div>
     </div>
-    <!-- /.register-box -->
-</div>
+  </div>
+</section>

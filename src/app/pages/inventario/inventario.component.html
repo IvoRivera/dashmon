@@ -1,7 +1,7 @@
 <div class="container mt-4 mx-4">
   <div class="card">
     <div class="card-body">
-      <span class="h3 ms-4">Inventario del laboratorio</span>
+      <span class="h3 mx-2">Inventario del laboratorio</span>
       <button class="btn btn-dark btn float-end mx-3" (click)="generarPDF()">Exportar como PDF</button>
       <button class="btn btn-dark btn float-end" [routerLink]="['/dashboard/create-item']">Agregar</button>
       <h4 class="container mt-4" *ngIf="items.length == 0">No hay items para mostrar</h4>
