@@ -111,6 +111,7 @@ export class DashboardComponent {
 
           if (!this.flagGraficos) this.crearGraficos(arregloHosts.length);
           if(this.cargaInicial)   this.setNetSeries();  
+          this.hosts = [];
           arregloHosts.forEach((host: any, i: number) => { //console.log(element);
             this.hosts[i] = host;
             this.hosts[i].ip = this.getIpHost(host.hostid, i);
@@ -299,7 +300,7 @@ export class DashboardComponent {
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   getDatosRanura(hostid: number, indice: number): void {
     this.chartOptions[indice][4] = this.defineGraficoRanura("graficoNET" + indice + 4);
-    console.log(this.arrayInterfacesIN);
+    
     
     this.arrayInterfacesIN.forEach(element => {
       if (element[2] == String(hostid))
@@ -842,7 +843,7 @@ export class DashboardComponent {
    * @param nombre - nombre del host
    */
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  clickMethod(hostid: number, nombre: string) {
+  eliminarHost(hostid: number, nombre: string) {
     if (confirm("Seguro que quieres eliminar el host " + nombre)) {
       if (confirm("Esta accion es irreversible ¿Realmente quieres eliminarlo?")) {
         this.servicioDatos.eliminarHost(String(hostid)).subscribe((res) => console.log(res));

@@ -36,8 +36,8 @@
           <mat-card id="cardCompacto">
             <p>IP: {{host.ip}}</p>
             <mat-card-title>
-              Servidor: {{host.host}}
-              <button type="button" class="btn-close" (click)="clickMethod(host.hostid, host.host)"
+              Host: {{host.host}}
+              <button type="button" class="btn-close" (click)="eliminarHost(host.hostid, host.host)"
                 style="float: right;"></button>
             </mat-card-title>
             <apx-chart [series]="chartOptionsCompacto[i]['series']" [chart]="chartOptionsCompacto[i]['chart']"
@@ -59,14 +59,14 @@
               <div class="row">
                 <div class="col-8">
                   <mat-card-title>
-                    Servidor: {{host.host}}
+                    Host: {{host.host}}
                   </mat-card-title>
                   <mat-card-subtitle>
                     Status: Online <span>🟢</span>
                   </mat-card-subtitle>
                 </div>
                 <div class="col-4">
-                  <button type="button" class="btn-close" (click)="clickMethod(host.hostid, host.host)"
+                  <button type="button" class="btn-close" (click)="eliminarHost(host.hostid, host.host)"
                     style="float: right;"></button>
 
                   <mat-card-actions align="end">
@@ -99,13 +99,13 @@
             <ng-template #inactivo>
               <div class="cardGrafico">
                 <mat-card-title>
-                  Servidor: {{host.host}}
+                  Host: {{host.host}}
                 </mat-card-title>
                 <mat-card-subtitle>
                   Status: Offline <span>🔴</span>
                 </mat-card-subtitle>
               </div>
-              <button type="button" class="btn-close" (click)="clickMethod(host.hostid, host.host)"
+              <button type="button" class="btn-close" (click)="eliminarHost(host.hostid, host.host)"
                 style="float: right; position: relative;top: -60px;"></button>
             </ng-template>
             <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////////-->
