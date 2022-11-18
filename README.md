@@ -20,3 +20,6 @@ https://drive.google.com/file/d/1DAMWq-esKLO-DSj8rXnsaCUn-M7LvCS6/view?usp=share
 En el siguiente enlace se puede ver el dashboard con sus princiaples caracteristicas funcionando:
 https://youtu.be/i9H5hL0MNU0
 
+  En este ejemplo se utilizó una maquina virtual para el servidor, mientras que el resto de los host operativos son maquinas fisicas,
+un notebook con Windows y una Raspberry con Debian. El servidor, con Ubuntu, tambien se monitorea como host
+
