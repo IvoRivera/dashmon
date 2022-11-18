@@ -22,7 +22,8 @@
               "dompurify",
               "rgbcolor",
               "raf",
-              "core-js"
+              "core-js",
+              "jspdf-autotable"
             ],
             "outputPath": "dist/dashmon",
             "index": "src/index.html",

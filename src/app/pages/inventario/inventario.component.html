@@ -1,7 +1,7 @@
 <div class="container mt-4 mx-4">
   <div class="card">
     <div class="card-body">
-      <span class="h3 mr-4">Inventario</span>
+      <span class="h3 mr-4">Inventario del laboratorio</span>
       <button class="btn btn-dark btn float-end" [routerLink]="['/dashboard/create-item']">Agregar</button>
       <button class="btn btn-dark btn float-end mx-3" (click)="generarPDF()">Exportar como PDF</button>
       <h4 class="container mt-4" *ngIf="items.length == 0">No hay items para mostrar</h4>
@@ -20,16 +20,16 @@
             <td>{{ item.nombre }}</td>
             <td>{{ item.descripcion }}</td>
             <td>{{ item.cantidad}}</td>
-            <div class="row-cols-auto">
-              <div class="opcion text-info" [routerLink]="['/dashboard/edit-item', item.id]">
-                <i class="fa-solid fa-pen-to-square me-1"></i>
-                <span>Editar</span>
+              <div class="d-flex justify-content-center col-8">
+                <div class="opcion text-info me-3" [routerLink]="['/dashboard/edit-item', item.id]">
+                  <i class="fa-solid fa-pen-to-square me-1"></i>
+                  <span>Editar</span>
+                </div>
+                <div class="opcion text-danger" (click)="eliminarItem(item.id)">
+                  <i class="fa-solid fa-trash me-1"></i>
+                  <span>Eliminar</span>
+                </div>
               </div>
-              <div class="opcion text-danger" (click)="eliminarItem(item.id)">
-                <i class="fa-solid fa-trash me-1"></i>
-                <span>Eliminar</span>
-              </div>
-            </div>
           </tr>
         </tbody>
       </table>

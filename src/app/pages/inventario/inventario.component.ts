@@ -3,6 +3,8 @@ import { ToastrService } from 'ngx-toastr';
 import { ItemService } from 'src/app/services/item.service';
 import { ElementRef, ViewChild } from '@angular/core';
 import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { doc } from '@angular/fire/firestore';
 
 
 @Component({
@@ -55,19 +57,9 @@ export class InventarioComponent implements OnInit {
   }
 
   generarPDF() {
-    var pdf = new jsPDF ('p', 'px', 'letter');
-    var margin = 20;
-    var scale = (pdf.internal.pageSize.width * 1.7 - margin * 2) / document.body.clientWidth;
-    pdf.html(this.el.nativeElement, {
-      x: margin,
-      y: margin,
-      html2canvas: {
-        scale: scale,
-      },
-      callback:(pdf) => {
-        pdf.save("inventario.pdf")
-      }
-    })
+      var pdf = new jsPDF()
+      autoTable(pdf, {html: '#content'})
+      pdf.save('inventario.pdf')
   }
 
 }
