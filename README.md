@@ -7,6 +7,7 @@ Dashboard de monitoreo del laboratorio de ciberseguridad
 ## Modo desarrollador
 
 Teniendo el codigo fuente, iniciar una consola de comandos en la raiz del proyecto e instalar sus dependencias con 'npm install', luego navegar a la carpeta "src" e ingresar el comando 'ng serve',este servidor deberia dar por defecto la direccion 'http://localhost:4200/'.
+Si uno de los dos comandos anteriores muestra un error relacionado con la version de ng-bootstrap, intentar forzar su instalacion con 'npm install --save --legacy-peer-deps @ng-bootstrap/ng-bootstrap'
 
 ## Modo produccion
 
