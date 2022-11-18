@@ -14,3 +14,6 @@ Si uno de los dos comandos anteriores muestra un error relacionado con la versio
 Si no se ha creado una build, generarla con 'ng build' en la raiz del proyecto, luego 'lite-server --baseDir=dist/dashmon'.
 Este servidor deberia dar por defecto la direccion 'http://localhost:3000/'.
 
+## ⚠️⚠️⚠️EN CASO DE QUE NO FUNCIONE⚠️⚠️⚠️
+En el siguiente enlace se puede ver el dashboard con sus princiaples caracteristicas funcionando:
+https://youtu.be/i9H5hL0MNU0
