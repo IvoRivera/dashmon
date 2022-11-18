@@ -8,7 +8,7 @@
               <span class="visually-hidden">Loading...</span>
             </div>
           </h3>
-          <span *ngIf="submitted && createItem.invalid" class="badge text-bg-danger">Todos los campos son obligatorios</span>
+          <span *ngIf="submitted && createItem.invalid" class="badge text-bg-danger">Campos Ingresados Invalidos</span>
           <form class="mt-4" [formGroup]="createItem" (ngSubmit)="agregarEditarItem()">
             <div class="row">
               <div class="col">
@@ -20,7 +20,7 @@
                   formControlName="nombre" placeholder="Nombre">
               </div>
               <div class="col">
-                <input type="number" class="form-control"
+                <input type="number" min="0" class="form-control"
                   formControlName="cantidad" placeholder="Cantidad">
               </div>
             </div>
