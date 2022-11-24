@@ -3,5 +3,6 @@ export const enum CODIGOSREQ {
   DISK = "vfs.fs.size[/,pused]",
   TEMP = "cluster1.cpuTemperature",
   CPU = "system.cpu.util",
+  UPTIME = "system.uptime"
 };
 

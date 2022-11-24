@@ -1,11 +1,13 @@
 import { Component } from '@angular/core';
-import { take, throwError } from 'rxjs';
+import { take } from 'rxjs';
 import { DataService } from '../../services/dataAPI/data.service'
 import { ModalDismissReasons, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { CODIGOSREQ } from './enum/CODIGOS';
+import { CODIGOSREQ } from '../../utils/CODIGOS';
 import * as ApexCharts from 'apexcharts';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Hosts } from '../../../interfaces/hosts';
+import { formatoUptime,defineGraficoRadial,defineGraficoRadialCompacto,defineGraficoRanura } from '../../utils/funcionesAuxiliares';
+
 
 
 
@@ -24,6 +26,7 @@ export class DashboardComponent {
   protected chartOptionsCompacto: Partial<any>[] = [];                                 // Arreglo de opciones vacios para los graficos radiales compactos.
   protected active = 1;                                                                // ID de la pestaña activa en los componentes modal.
   private flagGraficos: boolean = false;                                               // Flag para indicar que los graficos ya han sido creados y evitar que se inicialicen en cada actualizacion.
+  private cargaInicial: boolean = true;                                                // Flag para indicar que las interfaces de red han sido identificadas y evitar que se dupliquen al cambiar de vista
   protected hosts: any[] = [];                                                         // Arreglo que contiene los datos de los host, es necesario para que se listen los nombres de los hosts.
   private modalRef: NgbModalRef;                                                       // Objeto que hace referencia al modal activo, es necesaria para abrir o cerrar el modal
   private closeResult = '';                                                            // Objeto necesario para el funcionamiento de los modal
@@ -60,15 +63,16 @@ export class DashboardComponent {
   /**
    * El servicioDatos llama los metodos para establecer la direccion ip del servidor, puerto y token de autenticacion.
    * En el constructor se declaran e inicializan los servicios para comunicarse con el backend, componentes modales y formularios.
+   * Se declara e inicializa el formulario para conectarse a un servidor
    * Despues se declara e inicializa el formulario para agregar un nuevo host cuando se necesite.
-   * Finalmente se declara e inicializa el formulario para conectarse a un servidor, de ser necesario
+   * Finalmente comprueba si existen datos de sesion guardados para iniciar la conexion con esos datos
    *
    * @param servicioDatos - Servicio para comunicarse con el backend.
    * @param modalService - Servicio para comunicarse con el componente modal.
    * @param fb - Facilitador para crear formularios.
    */
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  constructor(private servicioDatos: DataService, private modalService: NgbModal, public fb: FormBuilder) {        
+  constructor(private servicioDatos: DataService, private modalService: NgbModal, public fb: FormBuilder) {
     this.formularioNuevoHost = this.fb.group({
       nombre: ['', [Validators.required, Validators.minLength(3), Validators.pattern('^[a-zA-Z0-9_]*$')]],
       ip: ['', [Validators.required, Validators.minLength(7), Validators.maxLength(15), Validators.pattern('^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$')]],
@@ -79,7 +83,20 @@ export class DashboardComponent {
       puerto: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(6), Validators.pattern('^((6553[0-5])|(655[0-2][0-9])|(65[0-4][0-9]{2})|(6[0-4][0-9]{3})|([1-5][0-9]{4})|([0-5]{0,5})|([0-9]{1,4}))$')]],
       token: ['', [Validators.required, Validators.minLength(3)]],
     });
-    this.initGraficos(5000);
+    if (sessionStorage.getItem("ip"))
+      this.servicioDatos.setHost(sessionStorage.getItem("ip")!);
+    if (sessionStorage.getItem("puerto"))
+      this.servicioDatos.setPuerto(sessionStorage.getItem("puerto")!);
+    if (sessionStorage.getItem("token"))
+      this.servicioDatos.setToken(sessionStorage.getItem("token")!);
+
+    this.initGraficos(this.INTERVALOACTUALIZACION);
+
+
+
+
+
+
   }
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -96,53 +113,69 @@ export class DashboardComponent {
    * Si el host esta activo, entonces se obtienen sus datos para mostrarlos en los graficos.
    * Si esta activo el modo compacto solo se cargan los datos de los graficos radiales, si no se cargan los datos de red adicionalmente,
    * los datos de red se cargan cada un minuto, para afectar al rendimiento del dashboard.
+   * Este metodo tambien verifica si se realizo una conexion correcta, invalida o incorrecta
    *
    * @param intervalo - numero en milisegundos en que se actualizan los datos
    */
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   initGraficos(intervalo: number) {
-    
+
+
+
+
     this.servicioDatos.getHosts().pipe(take(1)).subscribe({
-      next: (arregloHosts) => {  
-        if (arregloHosts !== null && arregloHosts !== undefined){
-        console.log("Conexion correcta ✅✅✅");
-          
-        if (!this.flagGraficos) this.crearGraficos(arregloHosts.length);
-        this.setNetSeries();
-        arregloHosts.forEach((host: any, i: number) => { //console.log(element);
-          this.hosts[i] = host;
-          this.hosts[i].ip = this.getIpHost(host.hostid, i);
-          if (host.active_available == 1) {
-            if (this.modoCompacto) {
-              setInterval(() => this.getDatosRadialesCompacto(host.hostid, i), intervalo)
-            } else {
-              setInterval(() => {
-                this.getDatosRadiales(host.hostid, i);
-                //this.getLogs(host.hostid);
-              }, intervalo)
-              setInterval(() => {
-                this.getDatosRanura(host.hostid, i);
-  
-              }, intervalo + 45000)
-            }
-          };
-        });} else {
+      next: (arregloHosts) => {
+        if (arregloHosts !== null && arregloHosts !== undefined) {
+          console.log("Conexion correcta ✅✅✅");
+
+          if (!this.flagGraficos) this.crearGraficos(arregloHosts.length);
+          if (this.cargaInicial) this.setNetSeries();
+          this.hosts = [];
+          arregloHosts.forEach((host: any, i: number) => {
+            console.log(host);
+            this.hosts[i] = host;
+            this.getIpHost(host.hostid, i);
+            if (host.active_available == 1) {
+              setInterval(() => this.servicioDatos.getItemByKey(host.hostid, [CODIGOSREQ.UPTIME]).subscribe(data => { this.hosts[i].uptime = formatoUptime(data.result[0].lastvalue) }), 1000)
+              if (this.modoCompacto) {
+                setInterval(() => this.getDatosRadialesCompacto(host.hostid, i), intervalo)
+              } else {
+                setInterval(() => {
+                  this.getDatosRadiales(host.hostid, i);
+                }, intervalo)
+                setInterval(() => {
+                  this.getDatosRanura(host.hostid, i);
+
+                }, intervalo + 45000)
+              }
+            };
+          });
+        } else {
           console.log("Token invalido ❌");
-          
-          
         }
       },
-      error: (error) => {console.info("No se ha podido conectar al servidor o no se han proporcionado credenciales ❌");
+      error: (error) => {
+        console.info("No se ha podido conectar al servidor o no se han proporcionado credenciales ❌");
       },
-      complete: () => console.info("Conexion completa ✅") 
-    }    
-      );
+      complete: () => console.info("Conexion completa ✅")
+    }
+    );
   }
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+ 
 
+
+  /**
+   * Este metodo obtiene la ip del host segun su id, busca entre todas las interfaces de red cual es la que utiliza para comunicarse 
+   * con el servidor, es decir, la que tiene la propiedad "useip" activa.
+   * 
+   * @param hostid - id del host que solicita su ip.
+   * @param indice - posicion del host en el array que los contiene a todos los demas.
+   */
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   getIpHost(hostid: number, indice: number) {
     this.servicioDatos.getInterfacesHosts(hostid).subscribe((res) => {
       res.result.forEach(element => {
@@ -151,8 +184,9 @@ export class DashboardComponent {
         }
       });
     });
-
   }
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
@@ -161,13 +195,22 @@ export class DashboardComponent {
    */
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   setNetSeries() {
-    this.servicioDatos.getHosts().pipe(take(1)).subscribe(arregloHosts => {  //console.log(arregloHosts);
-      arregloHosts.forEach((host: any, i: number) => { //console.log(element);
-        if (host.active_available == 1) {
-          this.getSeries(host.hostid, i);
-        };
-      });
-    });
+    this.servicioDatos.getHosts().pipe(take(1)).subscribe({
+      next: (arregloHosts) => {
+        arregloHosts.forEach((host: any, i: number) => { //console.log(element);
+          if (host.active_available == 1) {
+            this.getSeries(host.hostid, i);
+          };
+        });
+      },
+      error: (error) => {
+        console.log(error);
+      },
+      complete: () => {
+        this.cargaInicial = false;
+      }
+    }
+    )
   }
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -196,7 +239,7 @@ export class DashboardComponent {
           let recorte = res.result[i].name.substring(0, res.result[i].name.indexOf(':'));
           let nombreInterfaz = recorte.substr(recorte.indexOf(" ") + 1);
           this.addDatosRanura(hostid, itemid, indice, "IN", nombreInterfaz);
-          this.arrayInterfacesIN.push([nombreInterfaz, itemid, hostid])
+          this.arrayInterfacesIN.push([nombreInterfaz, itemid, hostid]);
           itemid = "";
         } else if (JSON.stringify(res.result[i]).indexOf("Bits sent") > 1) {
           itemid = res.result[i].itemid;
@@ -204,9 +247,11 @@ export class DashboardComponent {
           let nombreInterfaz = recorte.substr(recorte.indexOf(" ") + 1);
           this.addDatosRanura(hostid, itemid, indice, "OUT", nombreInterfaz);
           this.arrayInterfacesOUT.push([nombreInterfaz, itemid, hostid])
-          itemid = "";
         }
+        itemid = "";
       }
+
+
     });
   }
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -227,16 +272,16 @@ export class DashboardComponent {
       //console.log(datosHost);
 
       ApexCharts.exec("graficoRAM" + indice + 0, "updateSeries",
-        [100 - Math.floor(datosHost.result.find(e => e.key_ === CODIGOSREQ.RAM).lastvalue) ?
+        [(100 - Math.floor(datosHost.result.find(e => e.key_ === CODIGOSREQ.RAM).lastvalue) || undefined) ?
           100 - Math.floor(datosHost.result.find(e => e.key_ === CODIGOSREQ.RAM).lastvalue) : 0]);
       ApexCharts.exec("graficoCPU" + indice + 1, "updateSeries",
-        [Math.floor(datosHost.result.find(e => e.key_ === CODIGOSREQ.CPU).lastvalue) ?
+        [(Math.floor(datosHost.result.find(e => e.key_ === CODIGOSREQ.CPU).lastvalue) || undefined) ?
           Math.floor(datosHost.result.find(e => e.key_ === CODIGOSREQ.CPU).lastvalue) : 0]);
       ApexCharts.exec("graficoDISK" + indice + 2, "updateSeries",
-        [Math.floor(datosHost.result.find(e => e.key_ === CODIGOSREQ.DISK).lastvalue) ?
+        [(Math.floor(datosHost.result.find(e => e.key_ === CODIGOSREQ.DISK).lastvalue) || undefined) ?
           Math.floor(datosHost.result.find(e => e.key_ === CODIGOSREQ.DISK).lastvalue) : 0]);
       ApexCharts.exec("graficoTEMP" + indice + 3, "updateSeries",
-        [datosHost.result.find(e => e.key_ === CODIGOSREQ.TEMP) ?
+        [(datosHost.result.find(e => e.key_ === CODIGOSREQ.TEMP) || undefined) ?
           datosHost.result.find(e => e.key_ === CODIGOSREQ.TEMP).lastvalue : 0]);
 
 
@@ -287,7 +332,7 @@ export class DashboardComponent {
    */
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   getDatosRanura(hostid: number, indice: number): void {
-    this.chartOptions[indice][4] = this.defineGraficoRanura("graficoNET" + indice + 4);
+    this.chartOptions[indice][4] = defineGraficoRanura("graficoNET" + indice + 4);
     this.arrayInterfacesIN.forEach(element => {
       if (element[2] == String(hostid))
         this.updateDatosRanura(hostid, element[1], indice, "IN", element[0]);
@@ -395,277 +440,18 @@ export class DashboardComponent {
     * @param cantidadHosts - es la cantidad de host detectados por la metodo que llama esta.
     */
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  crearGraficos(cantidadHosts: number) {
-    for (let i = 0; i < cantidadHosts; i++) {
-      this.chartOptions[i][0] = this.defineGraficoRadial("graficoRAM" + i + 0, "RAM", "%");
-      this.chartOptions[i][1] = this.defineGraficoRadial("graficoCPU" + i + 1, "CPU", "%");
-      this.chartOptions[i][2] = this.defineGraficoRadial("graficoDISK" + i + 2, "Disk", "%");
-      this.chartOptions[i][3] = this.defineGraficoRadial("graficoTEMP" + i + 3, "Temp", "°C");
-      this.chartOptions[i][4] = this.defineGraficoRanura("graficoNET" + i + 4);
+  crearGraficos(cantidadHosts: number) {   
 
-      this.chartOptionsCompacto[i] = this.defineGraficoRadialCompacto("graficoCompacto" + i)
+    for (let i = 0; i < cantidadHosts; i++) {
+      this.chartOptions[i][0] = defineGraficoRadial("graficoRAM" + i + 0, "RAM", "%");
+      this.chartOptions[i][1] = defineGraficoRadial("graficoCPU" + i + 1, "CPU", "%");
+      this.chartOptions[i][2] = defineGraficoRadial("graficoDISK" + i + 2, "Disk", "%");
+      this.chartOptions[i][3] = defineGraficoRadial("graficoTEMP" + i + 3, "Temp", "°C");
+      this.chartOptions[i][4] = defineGraficoRanura("graficoNET" + i + 4);
+
+      this.chartOptionsCompacto[i] = defineGraficoRadialCompacto("graficoCompacto" + i)
     }
     this.flagGraficos = true;
-  }
-  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
-  /**
-   * Este metodo crea un arreglo de opciones que seran devueltos a la metodo que llama esta para ser asignados a un grafico tipo radial
-   * La estructura corresponde a un arreglo valido de opciones para un grafico de ApexCharts.
-   *
-   * @param id - String para identificar el grafico de manera interna.
-   * @param etiqueta - String que se muestra en el grafico ya dibujado.
-   * @param simbolo - Caracter que se muestra junto al valor del grafico, se utiliza "%"  y "°C".
-   *
-   * @returns Arreglo parcial en formato json con las opciones construidas para un tipo de grafico.
-   */
-  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  defineGraficoRadial(id: string, etiqueta: string, simbolo: string): Partial<any> {
-    let grafico = {
-      series: [0],
-      title: {
-        align: "center"
-      },
-      chart: {
-        id: id,
-        offsetX: -35,
-        animations: {
-          enabled: true,
-          easing: 'easeinout',
-          speed: 800,
-          animateGradually: {
-            enabled: true,
-            delay: 150
-          },
-          dynamicAnimation: {
-            enabled: true,
-            speed: 350
-          }
-        },
-        height: 200,
-        width: 200,
-        type: "radialBar",
-        toolbar: {
-          show: false
-        }
-      },
-      plotOptions: {
-        radialBar: {
-          startAngle: -135,
-          endAngle: 225,
-          hollow: {
-            margin: 0,
-            size: "70%",
-            background: "#ccc",
-            image: undefined,
-            position: "front",
-            dropShadow: {
-              enabled: true,
-              top: 3,
-              left: 0,
-              blur: 4,
-              opacity: 0.24
-            }
-          },
-          track: {
-            background: "#a3a3a3",
-            strokeWidth: "67%",
-            margin: 0,
-            dropShadow: {
-              enabled: true,
-              top: -3,
-              left: 0,
-              blur: 4,
-              opacity: 0.35
-            }
-          },
-          dataLabels: {
-            show: true,
-            name: {
-              offsetY: -5,
-              show: true,
-              color: "#888",
-              fontSize: "12px"
-            },
-            value: {
-              formatter: function (val: { toString: () => string; }) {
-                return parseInt(val.toString(), 10).toString() + simbolo;
-              },
-              color: "#111",
-              fontSize: "17px",
-              show: true
-            }
-          }
-        }
-      },
-      fill: {
-        type: "gradient",
-        gradient: {
-          shade: "dark",
-          type: "horizontal",
-          shadeIntensity: 0.5,
-          gradientToColors: ["#ABE5A1"],
-          inverseColors: true,
-          opacityFrom: 1,
-          opacityTo: 1,
-          stops: [0, 100]
-        }
-      },
-      stroke: {
-        lineCap: "round"
-      },
-      labels: [etiqueta],
-      autoUpdateSeries: true
-
-    };
-    return grafico;
-  }
-  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
-  /**
-   * Este metodo crea un arreglo de opciones que seran devueltos a la metodo que llama esta para ser asignados a un grafico tipo ranura
-   * La estructura corresponde a un arreglo valido de opciones para un grafico de ApexCharts.
-   *
-   * @param id - String para identificar el grafico de manera interna.
-   *
-   * @returns Arreglo parcial en formato json con las opciones construidas para un tipo de grafico.
-   */
-  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  defineGraficoRanura(id: string): Partial<any> {
-    let res = {
-      series: [],
-      chart: {
-        height: 350,
-        type: "area",
-        id: id,
-
-        zoom: {
-          enabled: true,
-          type: 'x',
-          autoScaleYaxis: true
-        }
-
-      },
-      dataLabels: {
-        enabled: false
-      },
-      stroke: {
-        curve: "smooth"
-      },
-      xaxis: {
-        type: "datetime",
-        min: Date.now() - 86400000,
-        max: Date.now(),
-        labels: {
-          datetimeUTC: false
-        }
-      },
-
-      tooltip: {
-        x: {
-          format: "dd/MM/yy HH:mm"
-        }
-      },
-      title: {
-        text: "Trafico de red (Bits/s)"
-      }
-
-    };
-    return res;
-  }
-  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
-  /**
-     * Esta metodo crea un arreglo de opciones que seran devueltos a la metodo que llama esta para ser asignados a un grafico tipo radial compacto
-     * La estructura corresponde a un arreglo valido de opciones para un grafico de ApexCharts.
-     * A diferencia del grafico radial no compacto es que este tiene preestablecidas las etiquetas para cada campo monitoreado,
-     * y solo se actualizan los datos asociados a estas etiquetas.
-     * Para la unidad de medida por defecto se imprime el simbolo "%", para el campo con indice 3 (temperatura) se imprime "°C"
-     *
-     * @param id - String para identificar el grafico de manera interna.
-     * @param titulo - Es el nombre del host para poder identificar a cual grafico corresponde
-     * @returns Arreglo parcial en formato json con las opciones construidas para un tipo de grafico.
-     */
-  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  defineGraficoRadialCompacto(id: string): Partial<any> {
-    let grafico = {
-      series: [0, 0, 0, 0],
-      chart: {
-        id: id,
-        height: 390,
-        redrawOnParentResize: false,
-        type: "radialBar"
-      },
-      plotOptions: {
-        radialBar: {
-          offsetY: 0,
-          startAngle: 0,
-          endAngle: 270,
-          hollow: {
-            margin: 40,
-            size: "30%",
-            background: "#ff0000",
-            image: undefined
-          },
-          dataLabels: {
-            name: {
-              show: false
-            },
-            value: {
-              show: false
-            }
-          }
-        }
-      },
-      colors: ["#1ab7ea", "#0084ff", "#39539E", "#0077B5"],
-      labels: ['RAM', 'CPU', 'Disco', 'Temp'],
-      title: {
-        text: "",
-        offsetY: 25,
-        offsetX: 60,
-        style: {
-          fontSize: "20px"
-        }
-      },
-      legend: {
-        show: true,
-        floating: true,
-        fontSize: "16px",
-        position: "left",
-        horizontalAlign: 'center',
-        offsetX: -30,
-        offsetY: 20,
-        labels: {
-          useSeriesColors: true
-        }, formatter: function (seriesName: string, opts: { w: { globals: { series: { [x: string]: string; }; }; }; seriesIndex: string | number; }) {
-          if (opts.seriesIndex == 3) return seriesName + ":  " + opts.w.globals.series[opts.seriesIndex] + "°C";
-          return seriesName + ":  " + opts.w.globals.series[opts.seriesIndex] + "%";
-        },
-        itemMargin: {
-          horizontal: 3
-        }
-      },
-      responsive: [
-        {
-          breakpoint: 480,
-          options: {
-            legend: {
-              show: false
-            }
-          }
-        }
-      ]
-    };
-    return grafico;
   }
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -792,7 +578,7 @@ export class DashboardComponent {
 
   /**
      * Este metodo crea una conexion con el servidor segun los datos de direccion ip, puerto y token que se le ingresen 
-     * por formulario
+     * por formulario. Tambien guarda estos datos para persistencia durante la sesion.
      *
      */
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -801,10 +587,16 @@ export class DashboardComponent {
       this.formularioConexion.markAllAsTouched();
       return;
     }
-    
+
     let ip = this.formularioConexion.get("ip")?.value;
+    sessionStorage.setItem("ip", ip);
+
     let puerto = this.formularioConexion.get("puerto")?.value;
+    sessionStorage.setItem("puerto", puerto)
+
     let token = this.formularioConexion.get("token")?.value;
+    sessionStorage.setItem("token", token);
+
 
 
     console.log("IP: " + ip, "Puerto: " + puerto, "Token: **************************************************************");
@@ -829,7 +621,7 @@ export class DashboardComponent {
    * @param nombre - nombre del host
    */
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  clickMethod(hostid: number, nombre: string) {
+  eliminarHost(hostid: number, nombre: string) {
     if (confirm("Seguro que quieres eliminar el host " + nombre)) {
       if (confirm("Esta accion es irreversible ¿Realmente quieres eliminarlo?")) {
         this.servicioDatos.eliminarHost(String(hostid)).subscribe((res) => console.log(res));
