@@ -179,11 +179,40 @@ export class DataService {
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+
+ /**
+   * Obtiene items segun su clave "key"
+   * 
+   * @param idZabbix -  id del host del cual obtendremos los items o datos configurados en el servidor
+   * @param key - clave del item
+   * 
+   * @returns Un objeto observable con los datos obtenidos
+   */
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  getItemByKey(idZabbix: number, key:string[]): Observable<DatosHosts> {
+    const id = 1;
+    const url = this.host + this.puerto + '/api_jsonrpc.php';
+    const headers = { "Content-Type": "application/json" };
+    const req = {
+      "jsonrpc": "2.0", "method": "item.get", "params":
+
+      {
+        "hostids": idZabbix,
+        output: "extend",
+        "search": { "key_": key },
+        
+      },
+      "auth": this.token, "id": id
+    };
+    return this.http.post<DatosHosts>(url, req, { headers }).pipe(
+      retry(3))
+  }
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   /**
    * Obtiene los items correspondientes a informacion de red de un host 
    * 
-   * @param idZabbix -  id del host del cual obtendremos los items o datos configurados en el servidor
-   * @param io - direccion del trafico de red, puede ser "IN" o "OUT"
+   * @param idZabbix -  id del host del cual obtendremos los items o datos configurados en el servidor   
    * 
    * @returns Un objeto observable con los datos obtenidos
    */

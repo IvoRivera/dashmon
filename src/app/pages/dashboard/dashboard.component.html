@@ -35,8 +35,9 @@
         <div class="cardGraficoCompacto">
           <mat-card id="cardCompacto">
             <p>IP: {{host.ip}}</p>
+            <p>Uptime: {{host.uptime}}</p>
             <mat-card-title>
-              Host: {{host.host}}
+              <p>Host: {{host.host}} </p> 
               <button type="button" class="btn-close" (click)="eliminarHost(host.hostid, host.host)"
                 style="float: right;"></button>
             </mat-card-title>
@@ -52,8 +53,12 @@
 
       <ng-template #extendido>
         <div class="cardGrafico">
-          <mat-card id="card">
+          <mat-card id="card">            
             <p>IP: {{host.ip}}</p>
+            <p>Uptime: {{host.uptime}}</p>
+            
+            
+
             <div *ngIf="host.active_available == '1'; then activo else inactivo"></div>
             <ng-template #activo>
               <div class="row">
@@ -289,7 +294,7 @@
         </div>
 
 
-        <!-- botones cancelar y crear -->
+        <!-- botones cancelar y conectar -->
         <div class="row">
           <div class="col-sm-3"></div>
           <div class="col-sm-9">
