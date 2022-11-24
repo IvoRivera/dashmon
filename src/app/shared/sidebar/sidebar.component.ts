@@ -25,8 +25,7 @@ export class SidebarComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.obtenerUsuario();
-    $('[data-widget="treeview"]').Treeview('init');
+    this.obtenerUsuario();    
   }
 
   async obtenerUsuario() {
